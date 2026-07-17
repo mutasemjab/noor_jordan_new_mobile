@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "998389060248",
+    "project_id": "noor-9754e",
+    "storage_bucket": "noor-9754e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:998389060248:android:be3243e958710228c676ed",
+        "android_client_info": {
+          "package_name": "com.school.noor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJHJHlfpOBZrmrjnyJ4HXXeEeHt5yjvw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
