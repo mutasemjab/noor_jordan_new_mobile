@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
+import '../../../../core/widgets/pdf_viewer_page.dart';
 import '../cubit/contract_cubit.dart';
 import '../cubit/contract_state.dart';
 import '../../domain/entities/contract.dart';
@@ -19,9 +20,11 @@ class ContractPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('عقدي المالي'),
+          title: const Text('عقدي المالي', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700, fontSize: 17)),
+          centerTitle: true,
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          elevation: 0,
         ),
         body: BlocBuilder<ContractCubit, ContractState>(
           builder: (context, state) {
@@ -42,6 +45,12 @@ class _ContractBody extends StatelessWidget {
   final Contract contract;
   const _ContractBody({required this.contract});
 
+  String _formatDate(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+    return DateFormat('d MMMM yyyy', 'ar').format(parsed);
+  }
+
   @override
   Widget build(BuildContext context) {
     final paidRatio = contract.totalAmount > 0 ? (contract.paidAmount / contract.totalAmount).clamp(0.0, 1.0) : 0.0;
@@ -56,6 +65,9 @@ class _ContractBody extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 6)),
+              ],
             ),
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -71,7 +83,6 @@ class _ContractBody extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                // Progress bar
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -79,16 +90,10 @@ class _ContractBody extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('نسبة السداد',
-                            style: TextStyle(
-                                fontFamily: 'Cairo',
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 12)),
+                            style: TextStyle(fontFamily: 'Cairo', color: Colors.white.withOpacity(0.8), fontSize: 12)),
                         Text('${(paidRatio * 100).toStringAsFixed(1)}%',
                             style: const TextStyle(
-                                fontFamily: 'Cairo',
-                                color: AppColors.accent,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14)),
+                                fontFamily: 'Cairo', color: AppColors.accent, fontWeight: FontWeight.w700, fontSize: 14)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -108,6 +113,25 @@ class _ContractBody extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (contract.startDate != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.calendar_today_outlined, color: Colors.white70, size: 14),
+                        const SizedBox(width: 8),
+                        Text('تاريخ بداية العقد: ${_formatDate(contract.startDate!)}',
+                            style: const TextStyle(fontFamily: 'Cairo', color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -117,9 +141,9 @@ class _ContractBody extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => launchUrl(Uri.parse(contract.contractPdfUrl!)),
+                onPressed: () => PdfViewerPage.open(context, url: contract.contractPdfUrl!, title: 'وثيقة العقد'),
                 icon: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.error),
-                label: const Text('عرض الوثيقة',
+                label: const Text('عرض وثيقة العقد',
                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w600, color: AppColors.primary)),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.divider),
@@ -130,54 +154,109 @@ class _ContractBody extends StatelessWidget {
             ),
           const SizedBox(height: 24),
           // Payments List
-          if (contract.payments.isNotEmpty) ...[
-            const Text('سجل المدفوعات',
-                style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary)),
-            const SizedBox(height: 12),
+          Row(
+            children: [
+              const Text('الوصولات',
+                  style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                child: Text('${contract.payments.length}',
+                    style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (contract.payments.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.divider),
+              ),
+              child: const Center(
+                child: Text('لا توجد وصولات دفع بعد', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary, fontSize: 13)),
+              ),
+            )
+          else
             ...contract.payments.asMap().entries.map((entry) {
               final i = entry.key;
               final p = entry.value;
               return TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
-                duration: Duration(milliseconds: 400 + i * 80),
+                duration: Duration(milliseconds: 300 + i * 70),
                 curve: Curves.easeOut,
                 builder: (_, v, child) => Opacity(opacity: v, child: child),
-                child: Card(
+                child: Container(
                   margin: const EdgeInsets.only(bottom: 10),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.present.withOpacity(0.1),
-                        shape: BoxShape.circle,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.divider),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.present.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(color: AppColors.present.withOpacity(0.1), shape: BoxShape.circle),
+                        child: const Icon(Icons.check_circle_outline, color: AppColors.present, size: 22),
                       ),
-                      child: const Icon(Icons.check_circle_outline, color: AppColors.present, size: 22),
-                    ),
-                    title: Text(
-                      '${p.amount.toStringAsFixed(2)} دينار',
-                      style: const TextStyle(
-                          fontFamily: 'Cairo', fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary),
-                    ),
-                    subtitle: Text(p.paymentDate,
-                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textSecondary)),
-                    trailing: p.receiptUrl != null
-                        ? IconButton(
-                            icon: const Icon(Icons.receipt_long_outlined, color: AppColors.primary),
-                            onPressed: () => launchUrl(Uri.parse(p.receiptUrl!)),
-                          )
-                        : null,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${p.amount.toStringAsFixed(2)} دينار',
+                                style: const TextStyle(
+                                    fontFamily: 'Cairo', fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary)),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today_outlined, size: 11, color: AppColors.textSecondary),
+                                const SizedBox(width: 4),
+                                Text(_formatDate(p.paidAt),
+                                    style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.textSecondary)),
+                              ],
+                            ),
+                            if (p.notes != null && p.notes!.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(p.notes!,
+                                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.textSecondary, height: 1.4)),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (p.receiptNumber.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('رقم الوصل', style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: AppColors.textSecondary)),
+                              Text(p.receiptNumber,
+                                  style: const TextStyle(
+                                      fontFamily: 'Cairo', fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               );
             }),
-          ],
-          if (contract.notes != null) ...[
+          if (contract.notes != null && contract.notes!.isNotEmpty) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(14),
@@ -193,13 +272,13 @@ class _ContractBody extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(contract.notes!,
-                        style: const TextStyle(
-                            fontFamily: 'Cairo', fontSize: 13, color: AppColors.textPrimary, height: 1.6)),
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.textPrimary, height: 1.6)),
                   ),
                 ],
               ),
             ),
           ],
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -218,7 +297,7 @@ class _AmountColumn extends StatelessWidget {
       children: [
         Text(label, style: TextStyle(fontFamily: 'Cairo', color: Colors.white.withOpacity(0.7), fontSize: 11)),
         const SizedBox(height: 6),
-        Text('${amount.toStringAsFixed(0)}',
+        Text(amount.toStringAsFixed(0),
             style: TextStyle(fontFamily: 'Cairo', color: color, fontSize: 18, fontWeight: FontWeight.w800)),
         Text('دينار', style: TextStyle(fontFamily: 'Cairo', color: Colors.white.withOpacity(0.6), fontSize: 10)),
       ],

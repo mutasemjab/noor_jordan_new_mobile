@@ -4,80 +4,62 @@ import '../../../../core/error/exceptions.dart';
 import '../models/teacher_grades_models.dart';
 
 abstract class TeacherGradesRemoteDataSource {
-  Future<List<GradeClassModel>> getClasses();
-  Future<List<GradeExamTypeModel>> getExamTypes(int classId);
-  Future<List<StudentGradeEntryModel>> getStudentGrades(int classId, int examTypeId);
-  Future<void> submitGrades({
+  Future<List<GradeRecordModel>> getGrades({
     required int classId,
-    required int examTypeId,
-    required List<Map<String, dynamic>> grades,
+    required int subjectId,
+    String? title,
   });
+
+  Future<void> submitGrades(Map<String, dynamic> body);
 }
 
 class TeacherGradesRemoteDataSourceImpl implements TeacherGradesRemoteDataSource {
   final Dio _dio;
   TeacherGradesRemoteDataSourceImpl(this._dio);
 
-  List<dynamic> _extractList(dynamic data, List<String> keys) {
-    if (data is List) return data;
-    if (data is Map) {
-      for (final key in keys) {
-        if (data[key] != null) return data[key] as List<dynamic>;
-      }
-    }
-    return [];
-  }
-
   @override
-  Future<List<GradeClassModel>> getClasses() async {
-    try {
-      final response = await _dio.get(ApiEndpoints.teacherGradeClasses);
-      final list = _extractList(response.data, ['data', 'classes']);
-      return list.map((e) => GradeClassModel.fromJson(e as Map<String, dynamic>)).toList();
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionError) throw const NetworkException();
-      throw ServerException(e.message ?? 'خطأ في الخادم');
-    }
-  }
-
-  @override
-  Future<List<GradeExamTypeModel>> getExamTypes(int classId) async {
-    try {
-      final response = await _dio.get(ApiEndpoints.teacherGradeExamTypes(classId));
-      final list = _extractList(response.data, ['data', 'exam_types', 'examTypes']);
-      return list.map((e) => GradeExamTypeModel.fromJson(e as Map<String, dynamic>)).toList();
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionError) throw const NetworkException();
-      throw ServerException(e.message ?? 'خطأ في الخادم');
-    }
-  }
-
-  @override
-  Future<List<StudentGradeEntryModel>> getStudentGrades(int classId, int examTypeId) async {
-    try {
-      final response = await _dio.get(ApiEndpoints.teacherGradeStudents(classId, examTypeId));
-      final list = _extractList(response.data, ['data', 'students']);
-      return list.map((e) => StudentGradeEntryModel.fromJson(e as Map<String, dynamic>)).toList();
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionError) throw const NetworkException();
-      throw ServerException(e.message ?? 'خطأ في الخادم');
-    }
-  }
-
-  @override
-  Future<void> submitGrades({
+  Future<List<GradeRecordModel>> getGrades({
     required int classId,
-    required int examTypeId,
-    required List<Map<String, dynamic>> grades,
+    required int subjectId,
+    String? title,
   }) async {
     try {
-      await _dio.post(
-        ApiEndpoints.teacherSubmitGrades,
-        data: {'class_id': classId, 'exam_type_id': examTypeId, 'grades': grades},
+      final response = await _dio.get(
+        ApiEndpoints.teacherGrades,
+        queryParameters: {
+          'class_id': classId,
+          'subject_id': subjectId,
+          if (title != null && title.isNotEmpty) 'title': title,
+        },
       );
+      final data = response.data;
+      final list = data is Map<String, dynamic> ? data['data'] as List<dynamic>? ?? [] : <dynamic>[];
+      return list.whereType<Map<String, dynamic>>().map((e) => GradeRecordModel.fromJson(e)).toList();
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionError) throw const NetworkException();
-      throw ServerException(e.message ?? 'خطأ في الخادم');
+      throw _mapError(e);
     }
+  }
+
+  @override
+  Future<void> submitGrades(Map<String, dynamic> body) async {
+    try {
+      await _dio.post(ApiEndpoints.teacherGrades, data: body);
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  Exception _mapError(DioException e) {
+    if (e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return const NetworkException();
+    }
+    final statusCode = e.response?.statusCode;
+    if (statusCode == 401) return const UnauthorizedException();
+    return ServerException(
+      e.response?.data?['message'] as String? ?? 'حدث خطأ في السيرفر',
+      statusCode: statusCode,
+    );
   }
 }

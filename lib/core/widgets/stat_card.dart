@@ -7,6 +7,7 @@ class StatCard extends StatefulWidget {
   final IconData icon;
   final Color color;
   final Color? iconBgColor;
+  final VoidCallback? onTap;
 
   const StatCard({
     super.key,
@@ -15,6 +16,7 @@ class StatCard extends StatefulWidget {
     required this.icon,
     required this.color,
     this.iconBgColor,
+    this.onTap,
   });
 
   @override
@@ -53,50 +55,57 @@ class _StatCardState extends State<StatCard>
       opacity: _fade,
       child: SlideTransition(
         position: _slide,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onTap,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.divider),
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.divider),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.color.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: (widget.iconBgColor ?? widget.color).withOpacity(0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(widget.icon, color: widget.color, size: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: (widget.iconBgColor ?? widget.color).withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(widget.icon, color: widget.color, size: 20),
+                  ),
+                  const SizedBox(height: 8),
+                  _CountUpText(
+                    target: widget.value,
+                    color: AppColors.textPrimary,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 10,
+                      color: AppColors.textSecondary,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              _CountUpText(
-                target: widget.value,
-                color: AppColors.textPrimary,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                widget.label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                style: const TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 10,
-                  color: AppColors.textSecondary,
-                  height: 1.3,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

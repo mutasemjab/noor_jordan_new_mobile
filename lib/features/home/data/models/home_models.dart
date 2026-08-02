@@ -3,7 +3,7 @@ import '../../domain/entities/home_data.dart';
 class BannerModel extends Banner {
   const BannerModel({
     required super.id,
-    required super.imageUrl,
+    required super.image,
     super.link,
     required super.isActive,
   });
@@ -11,7 +11,7 @@ class BannerModel extends Banner {
   factory BannerModel.fromJson(Map<String, dynamic> json) {
     return BannerModel(
       id: (json['id'] as num).toInt(),
-      imageUrl: json['image_url'] as String? ?? '',
+      image: json['image'] as String? ?? '',
       link: json['link'] as String?,
       isActive: json['is_active'] == true || json['is_active'] == 1,
     );
@@ -20,7 +20,7 @@ class BannerModel extends Banner {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'image_url': imageUrl,
+      'image': image,
       'link': link,
       'is_active': isActive,
     };
@@ -125,7 +125,7 @@ class StudentHomeDataModel extends StudentHomeData {
       'banners': banners
           .map((b) => BannerModel(
                 id: b.id,
-                imageUrl: b.imageUrl,
+                image: b.image,
                 link: b.link,
                 isActive: b.isActive,
               ).toJson())

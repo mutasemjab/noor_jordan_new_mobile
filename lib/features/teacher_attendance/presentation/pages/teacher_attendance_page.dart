@@ -11,19 +11,33 @@ import '../cubit/teacher_attendance_cubit.dart';
 import '../cubit/teacher_attendance_state.dart';
 
 class TeacherAttendancePage extends StatelessWidget {
-  const TeacherAttendancePage({super.key});
+  /// When set, skips the class-picker step and jumps straight into marking
+  /// attendance for this class (used when entering via the class hub).
+  final TeacherAttendanceClass? initialClass;
+
+  const TeacherAttendancePage({super.key, this.initialClass});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<TeacherAttendanceCubit>()..loadClasses(),
-      child: const _AttendanceView(),
+      create: (_) {
+        final cubit = sl<TeacherAttendanceCubit>();
+        final preselected = initialClass;
+        if (preselected != null) {
+          cubit.selectClass(preselected);
+        } else {
+          cubit.loadClasses();
+        }
+        return cubit;
+      },
+      child: _AttendanceView(initialClass: initialClass),
     );
   }
 }
 
 class _AttendanceView extends StatelessWidget {
-  const _AttendanceView();
+  final TeacherAttendanceClass? initialClass;
+  const _AttendanceView({this.initialClass});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +50,13 @@ class _AttendanceView extends StatelessWidget {
               backgroundColor: Colors.green,
             ),
           );
-          context.read<TeacherAttendanceCubit>().loadClasses();
+          if (initialClass != null) {
+            // Entered directly from the class hub — go back there instead of
+            // dropping into a full class picker that was never fetched.
+            Navigator.of(context).maybePop();
+          } else {
+            context.read<TeacherAttendanceCubit>().loadClasses();
+          }
         }
         if (state is TeacherAttendanceError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -207,6 +227,8 @@ class _StudentAttendanceList extends StatelessWidget {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Text('الكل ${_statusLabel(s)}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w600)),
                   ),

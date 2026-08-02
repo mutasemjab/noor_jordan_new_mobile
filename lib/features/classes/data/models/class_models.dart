@@ -8,6 +8,7 @@ class SchoolClassModel extends SchoolClass {
     required super.section,
     required super.studentCount,
     required super.subject,
+    super.scheduleImage,
   });
 
   factory SchoolClassModel.fromJson(Map<String, dynamic> json) {
@@ -18,7 +19,20 @@ class SchoolClassModel extends SchoolClass {
       section: json['section'] as String? ?? '',
       studentCount: (json['student_count'] ?? json['studentCount'] ?? 0) as int,
       subject: json['subject'] as String? ?? '',
+      scheduleImage: json['schedule_image'] as String?,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'grade': grade,
+      'section': section,
+      'student_count': studentCount,
+      'subject': subject,
+      'schedule_image': scheduleImage,
+    };
   }
 }
 

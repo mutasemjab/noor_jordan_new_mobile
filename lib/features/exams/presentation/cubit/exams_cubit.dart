@@ -1,37 +1,58 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/exam_entities.dart';
+import '../../domain/usecases/get_exam_detail_usecase.dart';
 import '../../domain/usecases/get_exams_usecase.dart';
+import '../../domain/usecases/get_my_exams_usecase.dart';
 import '../../domain/usecases/start_exam_usecase.dart';
 import '../../domain/usecases/submit_exam_usecase.dart';
 import 'exams_state.dart';
 
 class ExamsCubit extends Cubit<ExamsState> {
   final GetExamsUseCase _getExams;
+  final GetMyExamsUseCase _getMyExams;
+  final GetExamDetailUseCase _getExamDetail;
   final StartExamUseCase _startExam;
   final SubmitExamUseCase _submitExam;
   Timer? _countdownTimer;
 
-  ExamsCubit(this._getExams, this._startExam, this._submitExam) : super(ExamsInitial());
+  ExamsCubit(this._getExams, this._getMyExams, this._getExamDetail, this._startExam, this._submitExam)
+      : super(ExamsInitial());
 
-  Future<void> loadMyExams() async {
+  Future<void> loadExams() async {
     emit(ExamsLoading());
-    final result = await _getExams();
-    result.fold(
+    final examsResult = await _getExams();
+    final myExamsResult = await _getMyExams();
+
+    examsResult.fold(
       (f) => emit(ExamsError(f.message)),
-      (exams) => emit(ExamsLoaded(exams)),
+      (exams) {
+        myExamsResult.fold(
+          (f) => emit(ExamsError(f.message)),
+          (myExams) {
+            final takenIds = myExams.map((m) => m.exam.id).toSet();
+            final available = exams.where((e) => !takenIds.contains(e.id)).toList();
+            emit(ExamsLoaded(availableExams: available, myExams: myExams));
+          },
+        );
+      },
     );
   }
 
   Future<void> startExam(int examId, Exam exam) async {
     emit(ExamStarting());
     final result = await _startExam(examId);
-    result.fold(
-      (f) => emit(ExamsError(f.message)),
-      (attempt) {
-        final duration = Duration(minutes: exam.durationMinutes);
+    await result.fold(
+      (f) async => emit(ExamsError(f.message)),
+      (attempt) async {
+        // POST /start only returns exam metadata, not the actual questions —
+        // fetch the full detail (falls back to the summary-level exam if that fails).
+        final detailResult = await _getExamDetail(examId);
+        final fullExam = detailResult.fold((_) => exam, (detail) => detail);
+
+        final duration = Duration(minutes: fullExam.durationMinutes > 0 ? fullExam.durationMinutes : exam.durationMinutes);
         emit(ExamTaking(
-          exam: exam,
+          exam: fullExam,
           attemptId: attempt.id,
           currentIndex: 0,
           answers: {},

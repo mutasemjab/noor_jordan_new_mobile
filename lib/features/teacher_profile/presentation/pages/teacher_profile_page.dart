@@ -6,9 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection.dart';
-import '../../../../core/storage/local_storage.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../auth/presentation/cubit/auth_state.dart';
 import '../../domain/entities/teacher_profile.dart';
 import '../cubit/teacher_profile_cubit.dart';
 import '../cubit/teacher_profile_state.dart';
@@ -18,9 +19,17 @@ class TeacherProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<TeacherProfileCubit>()..loadProfile(),
-      child: const _TeacherProfileView(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<TeacherProfileCubit>()..loadProfile()),
+        BlocProvider(create: (_) => sl<AuthCubit>()),
+      ],
+      child: BlocListener<AuthCubit, AuthState>(
+        listener: (context, state) {
+          if (state is AuthLoggedOut) context.go('/role-select');
+        },
+        child: const _TeacherProfileView(),
+      ),
     );
   }
 }
@@ -217,22 +226,22 @@ class _TeacherProfileViewState extends State<_TeacherProfileView> {
   }
 
   void _confirmLogout(BuildContext context) {
+    final authCubit = context.read<AuthCubit>();
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700)),
         content: const Text('هل تريد تسجيل الخروج؟', style: TextStyle(fontFamily: 'Cairo')),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
           ),
           ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await sl<LocalStorage>().clearAll();
-              if (context.mounted) context.go('/');
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              authCubit.logout();
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('خروج', style: TextStyle(fontFamily: 'Cairo', color: Colors.white)),

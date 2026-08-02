@@ -1,3 +1,5 @@
+import '../../../classes/data/models/class_models.dart';
+import '../../../home/data/models/home_models.dart';
 import '../../domain/entities/teacher_home_data.dart';
 
 class TeacherStatsModel extends TeacherStats {
@@ -25,68 +27,44 @@ class TeacherStatsModel extends TeacherStats {
       };
 }
 
-class TodayPeriodModel extends TodayPeriod {
-  const TodayPeriodModel({
-    required super.periodNumber,
-    required super.label,
-    required super.startTime,
-    required super.endTime,
-    required super.className,
-    required super.subjectName,
-  });
-
-  factory TodayPeriodModel.fromJson(Map<String, dynamic> json) {
-    return TodayPeriodModel(
-      periodNumber: (json['period_number'] as num?)?.toInt() ?? 0,
-      label: json['label'] as String? ?? '',
-      startTime: json['start_time'] as String? ?? '',
-      endTime: json['end_time'] as String? ?? '',
-      className: (json['class'] as String?) ??
-          (json['class_name'] as String?) ??
-          '',
-      subjectName: (json['subject'] as String?) ??
-          (json['subject_name'] as String?) ??
-          '',
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'period_number': periodNumber,
-        'label': label,
-        'start_time': startTime,
-        'end_time': endTime,
-        'class': className,
-        'subject': subjectName,
-      };
-}
-
 class TeacherHomeDataModel extends TeacherHomeData {
   const TeacherHomeDataModel({
     required super.teacherId,
     required super.teacherName,
     super.teacherAvatar,
     required TeacherStatsModel stats,
-    required List<TodayPeriodModel> todaySchedule,
-  }) : super(stats: stats, todaySchedule: todaySchedule);
+    required List<BannerModel> banners,
+    required List<SchoolClassModel> classes,
+  }) : super(stats: stats, banners: banners, classes: classes);
 
-  factory TeacherHomeDataModel.fromJson(Map<String, dynamic> json) {
-    final teacherMap = json['teacher'] as Map<String, dynamic>? ?? {};
-    final statsMap = json['stats'] as Map<String, dynamic>? ?? {};
-    final scheduleList = json['today_schedule'] as List<dynamic>? ?? [];
+  factory TeacherHomeDataModel.fromJson({
+    required Map<String, dynamic> homeJson,
+    required List<dynamic> bannersJson,
+    required List<dynamic> classesJson,
+  }) {
+    final teacherMap = homeJson['teacher'] as Map<String, dynamic>? ?? {};
+    final statsMap = homeJson['stats'] as Map<String, dynamic>? ?? {};
 
     return TeacherHomeDataModel(
       teacherId: (teacherMap['id'] as num?)?.toInt() ?? 0,
       teacherName: teacherMap['name'] as String? ?? '',
       teacherAvatar: teacherMap['avatar'] as String?,
       stats: TeacherStatsModel.fromJson(statsMap),
-      todaySchedule: scheduleList
-          .map((e) => TodayPeriodModel.fromJson(e as Map<String, dynamic>))
+      banners: bannersJson
+          .map((e) => BannerModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      classes: classesJson
+          .map((e) => SchoolClassModel.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }
 
   factory TeacherHomeDataModel.fromCacheJson(Map<String, dynamic> json) =>
-      TeacherHomeDataModel.fromJson(json);
+      TeacherHomeDataModel.fromJson(
+        homeJson: json,
+        bannersJson: json['banners'] as List<dynamic>? ?? [],
+        classesJson: json['classes'] as List<dynamic>? ?? [],
+      );
 
   Map<String, dynamic> toJson() => {
         'teacher': {
@@ -95,8 +73,11 @@ class TeacherHomeDataModel extends TeacherHomeData {
           'avatar': teacherAvatar,
         },
         'stats': (stats as TeacherStatsModel).toJson(),
-        'today_schedule': (todaySchedule as List<TodayPeriodModel>)
-            .map((p) => p.toJson())
+        'banners': (banners as List<BannerModel>)
+            .map((b) => b.toJson())
+            .toList(),
+        'classes': (classes as List<SchoolClassModel>)
+            .map((c) => c.toJson())
             .toList(),
       };
 }

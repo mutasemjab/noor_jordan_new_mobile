@@ -2,24 +2,25 @@ import 'package:equatable/equatable.dart';
 
 class Payment extends Equatable {
   final int id;
+  final String receiptNumber;
   final double amount;
-  final String paymentDate;
+  final String paidAt;
   final String? notes;
-  final String? receiptUrl;
 
   const Payment({
     required this.id,
+    required this.receiptNumber,
     required this.amount,
-    required this.paymentDate,
+    required this.paidAt,
     this.notes,
-    this.receiptUrl,
   });
 
   @override
-  List<Object?> get props => [id, amount, paymentDate, notes, receiptUrl];
+  List<Object?> get props => [id, receiptNumber, amount, paidAt, notes];
 }
 
 class Contract extends Equatable {
+  final int id;
   final double totalAmount;
   final double paidAmount;
   final double remainingAmount;
@@ -29,6 +30,7 @@ class Contract extends Equatable {
   final List<Payment> payments;
 
   const Contract({
+    required this.id,
     required this.totalAmount,
     required this.paidAmount,
     required this.remainingAmount,
@@ -39,5 +41,14 @@ class Contract extends Equatable {
   });
 
   @override
-  List<Object?> get props => [totalAmount, paidAmount, remainingAmount];
+  List<Object?> get props => [
+        id,
+        totalAmount,
+        paidAmount,
+        remainingAmount,
+        startDate,
+        notes,
+        contractPdfUrl,
+        payments,
+      ];
 }

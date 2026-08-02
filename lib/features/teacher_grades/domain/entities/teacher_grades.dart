@@ -1,42 +1,39 @@
 import 'package:equatable/equatable.dart';
 
-class GradeClass extends Equatable {
-  final int classId;
-  final String className;
-  final String subject;
-
-  const GradeClass({required this.classId, required this.className, required this.subject});
-
-  @override
-  List<Object?> get props => [classId, className, subject];
-}
-
-class GradeExamType extends Equatable {
+/// One graded student, for one exam ("title"), as returned by the backend.
+class GradeRecord extends Equatable {
   final int id;
-  final String name;
-  final double maxScore;
-
-  const GradeExamType({required this.id, required this.name, required this.maxScore});
-
-  @override
-  List<Object?> get props => [id, name, maxScore];
-}
-
-class StudentGradeEntry extends Equatable {
   final int studentId;
   final String studentName;
-  final double? score;
+  final String title;
+  final double score;
+  final double maxScore;
+  final double percentage;
+  final DateTime? gradedAt;
 
-  const StudentGradeEntry({
+  const GradeRecord({
+    required this.id,
     required this.studentId,
     required this.studentName,
-    this.score,
+    required this.title,
+    required this.score,
+    required this.maxScore,
+    required this.percentage,
+    this.gradedAt,
   });
 
-  StudentGradeEntry copyWith({double? score}) {
-    return StudentGradeEntry(studentId: studentId, studentName: studentName, score: score ?? this.score);
-  }
+  @override
+  List<Object?> get props =>
+      [id, studentId, studentName, title, score, maxScore, percentage, gradedAt];
+}
+
+/// A single student's score, as submitted in a grades POST.
+class GradeEntryInput extends Equatable {
+  final int studentId;
+  final double score;
+
+  const GradeEntryInput({required this.studentId, required this.score});
 
   @override
-  List<Object?> get props => [studentId, studentName, score];
+  List<Object?> get props => [studentId, score];
 }

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/di/injection.dart';
 import '../cubit/exams_cubit.dart';
 import '../cubit/exams_state.dart';
+import 'exams_page.dart' show examTypeLabel;
 import '../../domain/entities/exam_entities.dart';
 
 class ExamDetailPage extends StatelessWidget {
@@ -13,30 +13,28 @@ class ExamDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<ExamsCubit>(),
-      child: BlocListener<ExamsCubit, ExamsState>(
-        listener: (context, state) {
-          if (state is ExamTaking) {
-            context.go('/exam-taking');
-          } else if (state is ExamsError) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(state.message, style: const TextStyle(fontFamily: 'Cairo')),
-              backgroundColor: AppColors.error,
-            ));
-          }
-        },
-        child: Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: Text(exam?.title ?? 'الاختبار'),
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-          ),
-          body: exam == null
-              ? const Center(child: Text('لا تتوفر بيانات الاختبار', style: TextStyle(fontFamily: 'Cairo')))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+    return BlocListener<ExamsCubit, ExamsState>(
+      listener: (context, state) {
+        if (state is ExamTaking) {
+          context.go('/exam-taking');
+        } else if (state is ExamsError) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(state.message, style: const TextStyle(fontFamily: 'Cairo')),
+            backgroundColor: AppColors.error,
+          ));
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: Text(exam?.title ?? 'الاختبار'),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+        ),
+        body: exam == null
+            ? const Center(child: Text('لا تتوفر بيانات الاختبار', style: TextStyle(fontFamily: 'Cairo')))
+            : SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.of(context).padding.bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -58,26 +56,41 @@ class ExamDetailPage extends StatelessWidget {
                                     fontSize: 20,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white)),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(examTypeLabel(exam!.examType),
+                                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
-                      _DetailCard(label: 'عدد الأسئلة', value: '${exam!.questionsCount} سؤال', icon: Icons.quiz_outlined),
+                      if (exam!.subject != null) ...[
+                        _DetailCard(label: 'المادة', value: exam!.subject!.name, icon: Icons.menu_book_outlined),
+                        const SizedBox(height: 12),
+                      ],
+                      if (exam!.description != null && exam!.description!.isNotEmpty) ...[
+                        Text(exam!.description!,
+                            style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.textSecondary, height: 1.6)),
+                        const SizedBox(height: 16),
+                      ],
+                      _DetailCard(label: 'عدد الأسئلة', value: '${exam!.totalQuestions} سؤال', icon: Icons.quiz_outlined),
                       const SizedBox(height: 12),
                       _DetailCard(label: 'مدة الاختبار', value: '${exam!.durationMinutes} دقيقة', icon: Icons.timer_outlined),
-                      if (exam!.startDate != null) ...[
+                      const SizedBox(height: 12),
+                      _DetailCard(label: 'العلامة الكاملة', value: '${exam!.totalMarks} علامة', icon: Icons.star_outline_rounded),
+                      if (exam!.passMarks != null) ...[
                         const SizedBox(height: 12),
-                        _DetailCard(
-                            label: 'تاريخ البدء',
-                            value: exam!.startDate!.toLocal().toString().split(' ').first,
-                            icon: Icons.calendar_today_outlined),
+                        _DetailCard(label: 'علامة النجاح', value: '${exam!.passMarks} علامة', icon: Icons.check_circle_outline),
                       ],
-                      if (exam!.endDate != null) ...[
+                      if (exam!.difficultyLevel != null) ...[
                         const SizedBox(height: 12),
-                        _DetailCard(
-                            label: 'تاريخ الانتهاء',
-                            value: exam!.endDate!.toLocal().toString().split(' ').first,
-                            icon: Icons.event_outlined),
+                        _DetailCard(label: 'مستوى الصعوبة', value: exam!.difficultyLevel!, icon: Icons.speed_outlined),
                       ],
                       const SizedBox(height: 32),
                       BlocBuilder<ExamsCubit, ExamsState>(
@@ -104,7 +117,6 @@ class ExamDetailPage extends StatelessWidget {
                   ),
                 ),
         ),
-      ),
     );
   }
 }

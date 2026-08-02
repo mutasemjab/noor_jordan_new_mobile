@@ -15,18 +15,55 @@ class TeacherHomeRemoteDataSourceImpl implements TeacherHomeRemoteDataSource {
   @override
   Future<TeacherHomeDataModel> getHome() async {
     try {
-      final response = await _dio.get(ApiEndpoints.teacherHome);
-      if (response.statusCode != 200) {
+      final homeResponse = await _dio.get(ApiEndpoints.teacherHome);
+      if (homeResponse.statusCode != 200) {
         throw ServerException(
           'فشل تحميل بيانات الرئيسية',
-          statusCode: response.statusCode,
+          statusCode: homeResponse.statusCode,
         );
       }
-      final raw = response.data;
-      final json = raw is Map<String, dynamic>
-          ? (raw['data'] as Map<String, dynamic>? ?? raw)
+
+      final classesResponse = await _dio.get(ApiEndpoints.teacherClasses);
+      if (classesResponse.statusCode != 200) {
+        throw ServerException(
+          'فشل تحميل الصفوف',
+          statusCode: classesResponse.statusCode,
+        );
+      }
+
+      // Banners are best-effort: an older backend without this endpoint
+      // shouldn't block the rest of the home screen from loading.
+      List<dynamic> bannersJson = [];
+      try {
+        final bannersResponse = await _dio.get(ApiEndpoints.teacherBanners);
+        final bannersData = bannersResponse.data;
+        if (bannersData is Map<String, dynamic>) {
+          bannersJson = bannersData['data'] as List<dynamic>? ?? [];
+        } else if (bannersData is List<dynamic>) {
+          bannersJson = bannersData;
+        }
+      } catch (_) {}
+
+      final homeData = homeResponse.data;
+      final homeJson = homeData is Map<String, dynamic>
+          ? (homeData['data'] as Map<String, dynamic>? ?? homeData)
           : <String, dynamic>{};
-      return TeacherHomeDataModel.fromJson(json);
+
+      final classesData = classesResponse.data;
+      final List<dynamic> classesJson;
+      if (classesData is Map) {
+        classesJson = (classesData['data'] ?? classesData['classes'] ?? []) as List<dynamic>;
+      } else if (classesData is List) {
+        classesJson = classesData;
+      } else {
+        classesJson = [];
+      }
+
+      return TeacherHomeDataModel.fromJson(
+        homeJson: homeJson,
+        bannersJson: bannersJson,
+        classesJson: classesJson,
+      );
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||

@@ -8,7 +8,7 @@ class GetScheduleUseCase {
 
   GetScheduleUseCase(this._repository);
 
-  Future<Either<Failure, List<DaySchedule>>> call() {
+  Future<Either<Failure, ClassSchedule>> call() {
     return _repository.getSchedule();
   }
 }

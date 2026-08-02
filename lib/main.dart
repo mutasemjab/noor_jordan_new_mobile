@@ -1,9 +1,11 @@
+import 'dart:convert';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/constants/app_colors.dart';
@@ -13,6 +15,14 @@ import 'core/theme/app_theme.dart';
 
 final FlutterLocalNotificationsPlugin localNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+/// Android channel id + iOS sound filename for the custom school-bell
+/// notification sound. Android channel sound is immutable once created on a
+/// device, so this uses a fresh id rather than reusing the old default
+/// channel (which is already cached with the system default sound on
+/// existing installs).
+const _bellChannelId = 'noor_bell_channel';
+const _iosSoundFile = 'school_bell.caf';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -42,6 +52,7 @@ Future<void> main() async {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     await _initLocalNotifications();
     _listenForegroundMessages();
+    _listenNotificationTaps();
   } catch (_) {
     // Firebase not configured — continue without it
   }
@@ -59,7 +70,31 @@ Future<void> _initLocalNotifications() async {
     requestSoundPermission: true,
   );
   const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
-  await localNotificationsPlugin.initialize(initSettings);
+  await localNotificationsPlugin.initialize(
+    initSettings,
+    onDidReceiveNotificationResponse: (response) {
+      final payload = response.payload;
+      if (payload == null || payload.isEmpty) return;
+      try {
+        final data = jsonDecode(payload) as Map<String, dynamic>;
+        _routePushTap(data);
+      } catch (_) {}
+    },
+  );
+
+  // Create the channel up front with the custom sound baked in — Android
+  // ignores sound changes on a channel that already exists, so this only
+  // takes effect the first time this channel id is seen on a device.
+  const bellChannel = AndroidNotificationChannel(
+    _bellChannelId,
+    'مدارس نور الأردن',
+    description: 'إشعارات المدرسة',
+    importance: Importance.high,
+    sound: RawResourceAndroidNotificationSound('school_bell'),
+  );
+  await localNotificationsPlugin
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(bellChannel);
 }
 
 void _listenForegroundMessages() {
@@ -73,21 +108,52 @@ void _listenForegroundMessages() {
       notification.body,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'noor_channel',
+          _bellChannelId,
           'مدارس نور الأردن',
           channelDescription: 'إشعارات المدرسة',
           importance: Importance.high,
           priority: Priority.high,
           color: AppColors.primary,
+          sound: const RawResourceAndroidNotificationSound('school_bell'),
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
+          sound: _iosSoundFile,
         ),
       ),
+      payload: jsonEncode(message.data),
     );
   });
+}
+
+/// Handles a push tap when the app was already running in the background
+/// (onMessageOpenedApp) and when it was launched cold from a terminated
+/// state by tapping the notification (getInitialMessage).
+void _listenNotificationTaps() {
+  FirebaseMessaging.onMessageOpenedApp.listen((message) => _routePushTap(message.data));
+
+  FirebaseMessaging.instance.getInitialMessage().then((message) {
+    if (message == null) return;
+    // The router isn't attached yet at this point in a cold start — wait
+    // for the first frame before pushing.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _routePushTap(message.data));
+  });
+}
+
+/// Central push-payload router: a `type` (or `screen`) field in the FCM
+/// data payload decides which screen to open on tap.
+void _routePushTap(Map<String, dynamic> data) {
+  final type = data['type'] as String? ?? data['screen'] as String?;
+  switch (type) {
+    case 'bus_tracking':
+    case 'bus_approaching':
+      appRouter.push('/bus-tracking');
+      break;
+    default:
+      break;
+  }
 }
 
 class NoorApp extends StatelessWidget {
@@ -108,6 +174,11 @@ class NoorApp extends StatelessWidget {
       },
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }

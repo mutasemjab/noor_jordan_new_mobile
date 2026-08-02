@@ -147,18 +147,19 @@ class _VideoListItemState extends State<_VideoListItem>
             child: Row(
               children: [
                 // Thumbnail
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(14),
-                    bottomRight: Radius.circular(14),
-                  ),
-                  child: Stack(
-                    children: [
-                      AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: SizedBox(
-                          width: 140,
-                          child: CachedNetworkImage(
+                SizedBox(
+                  width: 140,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(14),
+                      bottomRight: Radius.circular(14),
+                    ),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          CachedNetworkImage(
                             imageUrl: widget.video.thumbnail,
                             fit: BoxFit.cover,
                             placeholder: (_, __) => Container(
@@ -176,22 +177,20 @@ class _VideoListItemState extends State<_VideoListItem>
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                      // Play overlay
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withOpacity(0.25),
-                          child: const Center(
-                            child: Icon(
-                              Icons.play_circle_filled,
-                              color: Colors.white,
-                              size: 36,
+                          // Play overlay
+                          Container(
+                            color: Colors.black.withOpacity(0.25),
+                            child: const Center(
+                              child: Icon(
+                                Icons.play_circle_filled,
+                                color: Colors.white,
+                                size: 36,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
                 // Info

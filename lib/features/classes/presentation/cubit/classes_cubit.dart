@@ -34,11 +34,4 @@ class ClassesCubit extends Cubit<ClassesState> {
       emit(current.copyWith(searchQuery: query));
     }
   }
-
-  void backToClasses() {
-    final current = state;
-    if (current is ClassStudentsLoaded) {
-      loadClasses();
-    }
-  }
 }

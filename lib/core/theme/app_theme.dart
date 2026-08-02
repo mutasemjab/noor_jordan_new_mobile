@@ -35,7 +35,7 @@ class AppTheme {
           ),
           iconTheme: IconThemeData(color: Colors.white),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: AppColors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -177,7 +177,7 @@ class AppTheme {
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        dialogTheme: DialogTheme(
+        dialogTheme: DialogThemeData(
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           titleTextStyle: const TextStyle(
@@ -194,3 +194,4 @@ class AppTheme {
         ),
       );
   }
+}

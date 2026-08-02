@@ -6,12 +6,12 @@ import '../models/teacher_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<({String token, StudentModel student})> loginStudent({
-    required String phone,
+    required String nationalId,
     required String password,
   });
 
   Future<({String token, TeacherModel teacher})> loginTeacher({
-    required String email,
+    required String nationalId,
     required String password,
   });
 
@@ -26,15 +26,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<({String token, StudentModel student})> loginStudent({
-    required String phone,
+    required String nationalId,
     required String password,
   }) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.studentLogin,
-        data: {'phone': phone, 'password': password},
+        data: {'national_id': nationalId, 'password': password},
       );
-      final data = response.data as Map<String, dynamic>;
+      final data = _unwrap(response.data);
       return (
         token: data['token'] as String,
         student: StudentModel.fromJson(data['student'] as Map<String, dynamic>),
@@ -47,15 +47,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<({String token, TeacherModel teacher})> loginTeacher({
-    required String email,
+    required String nationalId,
     required String password,
   }) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.teacherLogin,
-        data: {'email': email, 'password': password},
+        data: {'national_id': nationalId, 'password': password},
       );
-      final data = response.data as Map<String, dynamic>;
+      final data = _unwrap(response.data);
       return (
         token: data['token'] as String,
         teacher: TeacherModel.fromJson(data['teacher'] as Map<String, dynamic>),
@@ -70,7 +70,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<({String token, StudentModel student})> switchSibling(int siblingId) async {
     try {
       final response = await _dio.post(ApiEndpoints.studentSwitchSibling(siblingId));
-      final data = response.data as Map<String, dynamic>;
+      final data = _unwrap(response.data);
       return (
         token: data['token'] as String,
         student: StudentModel.fromJson(data['student'] as Map<String, dynamic>),
@@ -86,6 +86,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       await _dio.post(endpoint);
     } catch (_) {}
+  }
+
+  Map<String, dynamic> _unwrap(dynamic responseData) {
+    final body = responseData as Map<String, dynamic>;
+    return body['data'] as Map<String, dynamic>? ?? body;
   }
 
   Never _handleDioError(DioException e) {

@@ -17,23 +17,12 @@ class ScheduleLoading extends ScheduleState {
 }
 
 class ScheduleLoaded extends ScheduleState {
-  final List<DaySchedule> schedule;
-  final int selectedDayIndex;
+  final ClassSchedule schedule;
 
-  const ScheduleLoaded(this.schedule, {this.selectedDayIndex = 0});
-
-  ScheduleLoaded copyWith({
-    List<DaySchedule>? schedule,
-    int? selectedDayIndex,
-  }) {
-    return ScheduleLoaded(
-      schedule ?? this.schedule,
-      selectedDayIndex: selectedDayIndex ?? this.selectedDayIndex,
-    );
-  }
+  const ScheduleLoaded(this.schedule);
 
   @override
-  List<Object?> get props => [schedule, selectedDayIndex];
+  List<Object?> get props => [schedule];
 }
 
 class ScheduleError extends ScheduleState {

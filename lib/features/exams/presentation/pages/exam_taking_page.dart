@@ -238,9 +238,10 @@ class ExamTakingPage extends StatelessWidget {
     final answered = state.answers.length;
     final total = state.exam.questions.length;
     final unanswered = total - answered;
+    final examsCubit = context.read<ExamsCubit>();
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('تسليم الاختبار', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700)),
         content: Column(
@@ -260,13 +261,13 @@ class ExamTakingPage extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              context.read<ExamsCubit>().submitExam();
+              Navigator.pop(dialogContext);
+              examsCubit.submitExam();
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
             child: const Text('تسليم', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700)),

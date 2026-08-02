@@ -7,7 +7,7 @@ class GetExamsUseCase {
   final ExamsRepository repository;
   GetExamsUseCase(this.repository);
 
-  Future<Either<Failure, List<MyExam>>> call() {
-    return repository.getMyExams();
+  Future<Either<Failure, List<Exam>>> call() {
+    return repository.getExams();
   }
 }

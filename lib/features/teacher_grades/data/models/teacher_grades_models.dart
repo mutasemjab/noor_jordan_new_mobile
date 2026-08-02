@@ -1,37 +1,28 @@
 import '../../domain/entities/teacher_grades.dart';
 
-class GradeClassModel extends GradeClass {
-  const GradeClassModel({required super.classId, required super.className, required super.subject});
+class GradeRecordModel extends GradeRecord {
+  const GradeRecordModel({
+    required super.id,
+    required super.studentId,
+    required super.studentName,
+    required super.title,
+    required super.score,
+    required super.maxScore,
+    required super.percentage,
+    super.gradedAt,
+  });
 
-  factory GradeClassModel.fromJson(Map<String, dynamic> json) {
-    return GradeClassModel(
-      classId: json['id'] as int,
-      className: json['name'] as String? ?? '',
-      subject: json['subject'] as String? ?? '',
-    );
-  }
-}
-
-class GradeExamTypeModel extends GradeExamType {
-  const GradeExamTypeModel({required super.id, required super.name, required super.maxScore});
-
-  factory GradeExamTypeModel.fromJson(Map<String, dynamic> json) {
-    return GradeExamTypeModel(
-      id: json['id'] as int,
-      name: json['name'] as String? ?? '',
-      maxScore: ((json['max_score'] ?? json['maxScore'] ?? 100) as num).toDouble(),
-    );
-  }
-}
-
-class StudentGradeEntryModel extends StudentGradeEntry {
-  const StudentGradeEntryModel({required super.studentId, required super.studentName, super.score});
-
-  factory StudentGradeEntryModel.fromJson(Map<String, dynamic> json) {
-    return StudentGradeEntryModel(
-      studentId: json['student_id'] as int? ?? json['id'] as int,
-      studentName: json['name'] as String? ?? '',
-      score: json['score'] != null ? (json['score'] as num).toDouble() : null,
+  factory GradeRecordModel.fromJson(Map<String, dynamic> json) {
+    final studentJson = json['student'] as Map<String, dynamic>? ?? {};
+    return GradeRecordModel(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      studentId: (studentJson['id'] as num?)?.toInt() ?? 0,
+      studentName: studentJson['name'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      score: (json['score'] as num?)?.toDouble() ?? 0,
+      maxScore: (json['max_score'] as num?)?.toDouble() ?? 0,
+      percentage: (json['percentage'] as num?)?.toDouble() ?? 0,
+      gradedAt: json['graded_at'] != null ? DateTime.tryParse(json['graded_at'] as String) : null,
     );
   }
 }

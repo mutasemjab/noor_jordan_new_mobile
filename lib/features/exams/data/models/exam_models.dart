@@ -31,34 +31,46 @@ class ExamQuestionModel extends ExamQuestion {
   }
 }
 
+ExamSubjectRef? _parseSubject(dynamic raw) {
+  if (raw is Map<String, dynamic>) {
+    return ExamSubjectRef(id: (raw['id'] as num?)?.toInt(), name: raw['name'] as String? ?? '');
+  }
+  if (raw is String && raw.isNotEmpty) {
+    return ExamSubjectRef(name: raw);
+  }
+  return null;
+}
+
 class ExamModel extends Exam {
   const ExamModel({
     required super.id,
     required super.title,
-    required super.durationMinutes,
-    required super.questionsCount,
-    required super.status,
-    super.startDate,
-    super.endDate,
+    super.description,
+    super.examType,
+    super.totalQuestions,
+    super.durationMinutes,
+    super.totalMarks,
+    super.passMarks,
+    super.difficultyLevel,
+    super.showResultImmediately,
+    super.subject,
     super.questions,
   });
 
   factory ExamModel.fromJson(Map<String, dynamic> json) {
     final questionsJson = json['questions'] as List<dynamic>? ?? [];
     return ExamModel(
-      id: json['id'] as int,
-      title: json['title'] as String? ?? '',
-      durationMinutes: json['duration_minutes'] as int? ?? json['duration'] as int? ?? 60,
-      questionsCount: json['questions_count'] as int? ??
-          json['total_questions'] as int? ??
-          questionsJson.length,
-      status: json['status'] as String? ?? 'upcoming',
-      startDate: json['start_date'] != null
-          ? DateTime.tryParse(json['start_date'] as String)
-          : null,
-      endDate: json['end_date'] != null
-          ? DateTime.tryParse(json['end_date'] as String)
-          : null,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      title: json['title'] as String? ?? json['title_ar'] as String? ?? '',
+      description: json['description'] as String?,
+      examType: json['exam_type'] as String? ?? 'unit',
+      totalQuestions: (json['total_questions'] as num?)?.toInt() ?? questionsJson.length,
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
+      totalMarks: (json['total_marks'] as num?)?.toInt() ?? 0,
+      passMarks: (json['pass_marks'] as num?)?.toInt(),
+      difficultyLevel: json['difficulty_level'] as String?,
+      showResultImmediately: json['show_result_immediately'] as bool? ?? false,
+      subject: _parseSubject(json['subject']),
       questions: questionsJson
           .map((e) => ExamQuestionModel.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -85,7 +97,7 @@ class AttemptAnswerModel extends AttemptAnswer {
   Map<String, dynamic> toJson() {
     return {
       'question_id': questionId,
-      'selected_option_id': selectedOptionId,
+      'option_id': selectedOptionId,
     };
   }
 }
@@ -103,9 +115,11 @@ class ExamAttemptModel extends ExamAttempt {
 
   factory ExamAttemptModel.fromJson(Map<String, dynamic> json) {
     final answersJson = json['answers'] as List<dynamic>? ?? [];
+    final examJson = json['exam'] as Map<String, dynamic>?;
     return ExamAttemptModel(
-      id: json['id'] as int,
-      examId: json['exam_id'] as int? ?? 0,
+      // POST /start returns "attempt_id", not "id" — accept either.
+      id: (json['id'] as num?)?.toInt() ?? (json['attempt_id'] as num?)?.toInt() ?? 0,
+      examId: (json['exam_id'] as num?)?.toInt() ?? (examJson?['id'] as num?)?.toInt() ?? 0,
       score: (json['score'] as num?)?.toDouble(),
       percentage: (json['percentage'] as num?)?.toDouble(),
       isPassed: json['is_passed'] as bool?,
@@ -119,22 +133,26 @@ class ExamAttemptModel extends ExamAttempt {
 
 class MyExamModel extends MyExam {
   const MyExamModel({
-    super.attemptId,
+    required super.attemptId,
     required super.exam,
-    super.score,
-    super.percentage,
-    super.isPassed,
+    required super.score,
+    required super.totalMarks,
+    required super.percentage,
+    required super.isPassed,
+    super.timeTakenMinutes,
     super.submittedAt,
   });
 
   factory MyExamModel.fromJson(Map<String, dynamic> json) {
-    final examJson = json['exam'] as Map<String, dynamic>? ?? json;
+    final examJson = json['exam'] as Map<String, dynamic>? ?? {};
     return MyExamModel(
-      attemptId: json['attempt_id'] as int?,
+      attemptId: (json['attempt_id'] as num?)?.toInt() ?? 0,
       exam: ExamModel.fromJson(examJson),
-      score: (json['score'] as num?)?.toDouble(),
-      percentage: (json['percentage'] as num?)?.toDouble(),
-      isPassed: json['is_passed'] as bool?,
+      score: (json['score'] as num? ?? 0).toDouble(),
+      totalMarks: (json['total_marks'] as num? ?? 0).toDouble(),
+      percentage: (json['percentage'] as num? ?? 0).toDouble(),
+      isPassed: json['is_passed'] as bool? ?? false,
+      timeTakenMinutes: (json['time_taken_minutes'] as num?)?.toInt(),
       submittedAt: json['submitted_at'] != null
           ? DateTime.tryParse(json['submitted_at'] as String)
           : null,

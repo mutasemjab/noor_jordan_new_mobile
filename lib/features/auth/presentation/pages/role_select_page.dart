@@ -75,16 +75,15 @@ class _RoleSelectPageState extends State<RoleSelectPage>
               children: [
                 const Spacer(),
                 // Logo + Title
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: const BoxDecoration(
+                ClipOval(
+                  child: Container(
+                    width: 120,
+                    height: 120,
                     color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),

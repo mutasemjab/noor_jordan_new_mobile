@@ -113,7 +113,6 @@ class _AttendanceContent extends StatelessWidget {
         children: [
           // Calendar
           Container(
-            color: AppColors.surface,
             margin: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.surface,

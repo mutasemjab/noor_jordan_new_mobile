@@ -199,13 +199,15 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                                 const SizedBox(height: 20),
                               ],
                               // Menu items
+                              _MenuItem(icon: Icons.chat_bubble_outline_rounded, label: 'الرسائل', color: AppColors.accent, onTap: () => context.push('/messages')),
                               _MenuItem(icon: Icons.receipt_long_outlined, label: 'عقدي المالي', color: AppColors.accent, onTap: () => context.push('/contract')),
-                              _MenuItem(icon: Icons.menu_book_outlined, label: 'المواد والفيديوهات', color: AppColors.primary, onTap: () => context.push('/subjects')),
                               _MenuItem(icon: Icons.quiz_outlined, label: 'الاختبارات', color: AppColors.primary, onTap: () => context.push('/exams')),
                               _MenuItem(icon: Icons.folder_outlined, label: 'الملفات', color: AppColors.primary, onTap: () => context.push('/files')),
-                              _MenuItem(icon: Icons.campaign_outlined, label: 'الإعلانات', color: AppColors.primary, onTap: () => context.push('/announcements')),
+                              _MenuItem(icon: Icons.calendar_today_outlined, label: 'جدول الحصص', color: AppColors.primary, onTap: () => context.push('/schedule')),
+                              _MenuItem(icon: Icons.event_note_outlined, label: 'جداول الامتحانات', color: AppColors.primary, onTap: () => context.push('/exam-schedules')),
+                              _MenuItem(icon: Icons.campaign_outlined, label: 'الإعلانات', color: AppColors.primary, onTap: () => context.go('/announcements')),
                               _MenuItem(icon: Icons.notifications_outlined, label: 'الإشعارات', color: AppColors.primary, onTap: () => context.push('/notifications')),
-                              _MenuItem(icon: Icons.notes_outlined, label: 'الملاحظات التعليمية', color: AppColors.primary, onTap: () => context.push('/educational-notes')),
+                              _MenuItem(icon: Icons.notes_outlined, label: 'مفكرتي', color: AppColors.primary, onTap: () => context.go('/educational-notes')),
                               const Divider(color: AppColors.divider, height: 24),
                               _MenuItem(
                                 icon: Icons.logout_rounded,
@@ -248,22 +250,23 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
   }
 
   void _showLogoutDialog(BuildContext context) {
+    final authCubit = context.read<AuthCubit>();
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700)),
         content: const Text('هل أنت متأكد من تسجيل الخروج؟',
             style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              context.read<AuthCubit>().logout();
+              Navigator.pop(dialogContext);
+              authCubit.logout();
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
             child: const Text('خروج', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700)),

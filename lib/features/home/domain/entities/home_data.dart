@@ -2,19 +2,19 @@ import 'package:equatable/equatable.dart';
 
 class Banner extends Equatable {
   final int id;
-  final String imageUrl;
+  final String image;
   final String? link;
   final bool isActive;
 
   const Banner({
     required this.id,
-    required this.imageUrl,
+    required this.image,
     this.link,
     required this.isActive,
   });
 
   @override
-  List<Object?> get props => [id, imageUrl, link, isActive];
+  List<Object?> get props => [id, image, link, isActive];
 }
 
 class TopTeacher extends Equatable {

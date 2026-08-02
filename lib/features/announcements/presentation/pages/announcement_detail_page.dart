@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/widgets/error_widget.dart';
+import '../../../../core/widgets/fullscreen_image_viewer.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../cubit/announcements_cubit.dart';
 import '../cubit/announcements_state.dart';
@@ -55,14 +56,22 @@ class AnnouncementDetailPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (item.imageUrl != null)
-                      Hero(
-                        tag: 'announcement-${item.id}',
-                        child: CachedNetworkImage(
-                          imageUrl: item.imageUrl!,
-                          width: double.infinity,
-                          height: 220,
-                          fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                      GestureDetector(
+                        onTap: () => FullscreenImageViewer.open(
+                          context,
+                          item!.imageUrl!,
+                          heroTag: 'announcement-${item.id}',
+                          title: item.title,
+                        ),
+                        child: Hero(
+                          tag: 'announcement-${item.id}',
+                          child: CachedNetworkImage(
+                            imageUrl: item.imageUrl!,
+                            width: double.infinity,
+                            height: 220,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                          ),
                         ),
                       ),
                     Padding(

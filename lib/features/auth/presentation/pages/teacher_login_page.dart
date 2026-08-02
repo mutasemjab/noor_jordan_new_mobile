@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -19,7 +20,7 @@ class TeacherLoginPage extends StatefulWidget {
 class _TeacherLoginPageState extends State<TeacherLoginPage>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
+  final _nationalIdCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   late List<AnimationController> _fieldControllers;
   late List<Animation<double>> _fieldFades;
@@ -47,7 +48,7 @@ class _TeacherLoginPageState extends State<TeacherLoginPage>
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
+    _nationalIdCtrl.dispose();
     _passwordCtrl.dispose();
     for (final c in _fieldControllers) c.dispose();
     super.dispose();
@@ -109,12 +110,13 @@ class _TeacherLoginPageState extends State<TeacherLoginPage>
                     _buildAnimatedField(
                       index: 1,
                       child: AppTextField(
-                        label: 'البريد الإلكتروني',
-                        hint: 'example@school.edu.jo',
-                        controller: _emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
-                        prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary, size: 20),
-                        validator: Validators.validateEmail,
+                        label: 'الرقم الوطني',
+                        hint: 'أدخل الرقم الوطني',
+                        controller: _nationalIdCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        prefixIcon: const Icon(Icons.badge_outlined, color: AppColors.primary, size: 20),
+                        validator: Validators.validateNationalId,
                         textInputAction: TextInputAction.next,
                       ),
                     ),
@@ -175,7 +177,7 @@ class _TeacherLoginPageState extends State<TeacherLoginPage>
   void _submit(BuildContext context) {
     if (_formKey.currentState?.validate() != true) return;
     context.read<AuthCubit>().loginAsTeacher(
-          email: _emailCtrl.text.trim(),
+          nationalId: _nationalIdCtrl.text.trim(),
           password: _passwordCtrl.text,
         );
   }

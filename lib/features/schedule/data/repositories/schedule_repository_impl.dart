@@ -23,7 +23,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
         _localStorage = localStorage;
 
   @override
-  Future<Either<Failure, List<DaySchedule>>> getSchedule() async {
+  Future<Either<Failure, ClassSchedule>> getSchedule() async {
     final isConnected = await _networkInfo.isConnected;
 
     if (isConnected) {
@@ -31,7 +31,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
         final result = await _remoteDataSource.getSchedule();
         await _localStorage.cacheData(
           AppConstants.cachedScheduleKey,
-          result.map((d) => (d as DayScheduleModel).toJson()).toList(),
+          result.toJson(),
         );
         return Right(result);
       } on NetworkException {
@@ -46,13 +46,9 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     } else {
       final cachedRaw =
           _localStorage.getCachedData(AppConstants.cachedScheduleKey);
-      if (cachedRaw != null && cachedRaw is List<dynamic>) {
+      if (cachedRaw != null && cachedRaw is Map<String, dynamic>) {
         try {
-          final cached = cachedRaw
-              .whereType<Map<String, dynamic>>()
-              .map((e) => DayScheduleModel.fromJson(e))
-              .toList();
-          return Right(cached);
+          return Right(ClassScheduleModel.fromJson(cachedRaw));
         } catch (_) {
           return const Left(CacheFailure('تعذّر قراءة الجدول المحفوظ'));
         }

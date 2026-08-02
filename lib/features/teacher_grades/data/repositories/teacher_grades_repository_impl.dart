@@ -13,55 +13,55 @@ class TeacherGradesRepositoryImpl implements TeacherGradesRepository {
   TeacherGradesRepositoryImpl(this._remote, this._network);
 
   @override
-  Future<Either<Failure, List<GradeClass>>> getClasses() async {
+  Future<Either<Failure, List<GradeRecord>>> getGrades({
+    required int classId,
+    required int subjectId,
+    String? title,
+  }) async {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
-      return Right(await _remote.getClasses());
+      return Right(await _remote.getGrades(classId: classId, subjectId: subjectId, title: title));
     } on NetworkException {
       return const Left(NetworkFailure());
+    } on UnauthorizedException {
+      return const Left(UnauthorizedFailure());
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<GradeExamType>>> getExamTypes(int classId) async {
-    if (!await _network.isConnected) return const Left(NetworkFailure());
-    try {
-      return Right(await _remote.getExamTypes(classId));
-    } on NetworkException {
-      return const Left(NetworkFailure());
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<StudentGradeEntry>>> getStudentGrades(int classId, int examTypeId) async {
-    if (!await _network.isConnected) return const Left(NetworkFailure());
-    try {
-      return Right(await _remote.getStudentGrades(classId, examTypeId));
-    } on NetworkException {
-      return const Left(NetworkFailure());
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
     }
   }
 
   @override
   Future<Either<Failure, void>> submitGrades({
     required int classId,
-    required int examTypeId,
-    required List<Map<String, dynamic>> grades,
+    required int subjectId,
+    required String title,
+    required double maxScore,
+    required DateTime gradedAt,
+    required List<GradeEntryInput> grades,
   }) async {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
-      await _remote.submitGrades(classId: classId, examTypeId: examTypeId, grades: grades);
+      final gradedAtStr =
+          '${gradedAt.year.toString().padLeft(4, '0')}-${gradedAt.month.toString().padLeft(2, '0')}-${gradedAt.day.toString().padLeft(2, '0')}';
+      await _remote.submitGrades({
+        'class_id': classId,
+        'subject_id': subjectId,
+        'title': title,
+        'max_score': maxScore,
+        'graded_at': gradedAtStr,
+        'grades': grades.map((g) => {'student_id': g.studentId, 'score': g.score}).toList(),
+      });
       return const Right(null);
     } on NetworkException {
       return const Left(NetworkFailure());
+    } on UnauthorizedException {
+      return const Left(UnauthorizedFailure());
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
     }
   }
 }

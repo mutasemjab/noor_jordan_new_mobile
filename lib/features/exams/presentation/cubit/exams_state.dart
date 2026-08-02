@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/exam_entities.dart';
 
@@ -12,10 +11,16 @@ class ExamsInitial extends ExamsState {}
 class ExamsLoading extends ExamsState {}
 
 class ExamsLoaded extends ExamsState {
+  /// Exams from GET /exams that don't have a matching entry in [myExams] yet.
+  final List<Exam> availableExams;
+
+  /// Submitted attempts from GET /my-exams.
   final List<MyExam> myExams;
-  const ExamsLoaded(this.myExams);
+
+  const ExamsLoaded({required this.availableExams, required this.myExams});
+
   @override
-  List<Object?> get props => [myExams];
+  List<Object?> get props => [availableExams, myExams];
 }
 
 class ExamsError extends ExamsState {

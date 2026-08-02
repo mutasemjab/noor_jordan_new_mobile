@@ -25,7 +25,8 @@ class FileItemModel extends FileItem {
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
       subject: subjectName,
-      fileUrl: json['file_url'] as String? ??
+      fileUrl: json['pdf_url'] as String? ??
+          json['file_url'] as String? ??
           json['file'] as String? ??
           json['url'] as String? ??
           '',

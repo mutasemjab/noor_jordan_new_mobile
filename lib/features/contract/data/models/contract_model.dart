@@ -3,23 +3,24 @@ import '../../domain/entities/contract.dart';
 class PaymentModel extends Payment {
   const PaymentModel({
     required super.id,
+    required super.receiptNumber,
     required super.amount,
-    required super.paymentDate,
+    required super.paidAt,
     super.notes,
-    super.receiptUrl,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) => PaymentModel(
-        id: json['id'] as int,
-        amount: (json['amount'] as num).toDouble(),
-        paymentDate: (json['payment_date'] ?? json['date'] ?? '') as String,
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        receiptNumber: json['receipt_number'] as String? ?? '',
+        amount: (json['amount'] as num? ?? 0).toDouble(),
+        paidAt: json['paid_at'] as String? ?? '',
         notes: json['notes'] as String?,
-        receiptUrl: json['receipt_url'] as String?,
       );
 }
 
 class ContractModel extends Contract {
   const ContractModel({
+    required super.id,
     required super.totalAmount,
     required super.paidAmount,
     required super.remainingAmount,
@@ -30,19 +31,21 @@ class ContractModel extends Contract {
   });
 
   factory ContractModel.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] ?? json;
-    final paymentList = (data['payments'] as List<dynamic>?)
+    final root = json['data'] as Map<String, dynamic>? ?? json;
+    final contractJson = root['contract'] as Map<String, dynamic>? ?? {};
+    final paymentsList = (root['payments'] as List<dynamic>?)
             ?.map((p) => PaymentModel.fromJson(p as Map<String, dynamic>))
             .toList() ??
         [];
     return ContractModel(
-      totalAmount: (data['total_amount'] as num? ?? 0).toDouble(),
-      paidAmount: (data['paid_amount'] as num? ?? 0).toDouble(),
-      remainingAmount: (data['remaining_amount'] as num? ?? 0).toDouble(),
-      startDate: data['start_date'] as String?,
-      notes: data['notes'] as String?,
-      contractPdfUrl: data['contract_pdf'] as String?,
-      payments: paymentList,
+      id: (contractJson['id'] as num?)?.toInt() ?? 0,
+      totalAmount: (contractJson['total_amount'] as num? ?? 0).toDouble(),
+      paidAmount: (contractJson['paid_amount'] as num? ?? 0).toDouble(),
+      remainingAmount: (contractJson['remaining_amount'] as num? ?? 0).toDouble(),
+      startDate: contractJson['start_date'] as String?,
+      notes: contractJson['notes'] as String?,
+      contractPdfUrl: contractJson['contract_pdf'] as String?,
+      payments: paymentsList,
     );
   }
 }

@@ -7,7 +7,7 @@ import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../cubit/classes_cubit.dart';
 import '../cubit/classes_state.dart';
-import 'class_students_page.dart';
+import 'class_hub_page.dart';
 
 class ClassesPage extends StatelessWidget {
   const ClassesPage({super.key});
@@ -28,10 +28,6 @@ class _ClassesView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ClassesCubit, ClassesState>(
       builder: (context, state) {
-        if (state is ClassStudentsLoaded || state is ClassStudentsLoading) {
-          return ClassStudentsPage(cubit: context.read<ClassesCubit>());
-        }
-
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
@@ -73,7 +69,9 @@ class _ClassesView extends StatelessWidget {
             duration: Duration(milliseconds: 300 + i * 80),
             builder: (_, v, child) => Opacity(opacity: v, child: child),
             child: GestureDetector(
-              onTap: () => context.read<ClassesCubit>().loadStudents(cls),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => ClassHubPage(schoolClass: cls)),
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,

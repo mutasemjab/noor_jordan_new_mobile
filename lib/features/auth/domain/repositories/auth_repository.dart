@@ -6,12 +6,12 @@ import '../entities/teacher.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, ({String token, Student student})>> loginStudent({
-    required String phone,
+    required String nationalId,
     required String password,
   });
 
   Future<Either<Failure, ({String token, Teacher teacher})>> loginTeacher({
-    required String email,
+    required String nationalId,
     required String password,
   });
 

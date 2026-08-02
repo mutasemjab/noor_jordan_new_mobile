@@ -8,9 +8,9 @@ class LoginStudentUseCase {
   LoginStudentUseCase(this._repo);
 
   Future<Either<Failure, ({String token, Student student})>> call({
-    required String phone,
+    required String nationalId,
     required String password,
   }) {
-    return _repo.loginStudent(phone: phone, password: password);
+    return _repo.loginStudent(nationalId: nationalId, password: password);
   }
 }

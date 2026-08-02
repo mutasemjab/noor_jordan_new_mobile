@@ -19,12 +19,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, ({String token, Student student})>> loginStudent({
-    required String phone,
+    required String nationalId,
     required String password,
   }) async {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
-      final result = await _remote.loginStudent(phone: phone, password: password);
+      final result = await _remote.loginStudent(nationalId: nationalId, password: password);
       await _storage.saveToken(result.token);
       await _storage.saveUserType(AppConstants.userTypeStudent);
       await _storage.saveUserData((result.student as StudentModel).toJson());
@@ -42,14 +42,15 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, ({String token, Teacher teacher})>> loginTeacher({
-    required String email,
+    required String nationalId,
     required String password,
   }) async {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
-      final result = await _remote.loginTeacher(email: email, password: password);
+      final result = await _remote.loginTeacher(nationalId: nationalId, password: password);
       await _storage.saveToken(result.token);
       await _storage.saveUserType(AppConstants.userTypeTeacher);
+      await _storage.saveUserData(result.teacher.toJson());
       return Right((token: result.token, teacher: result.teacher));
     } on AuthException catch (e) {
       return Left(AuthFailure(e.message));

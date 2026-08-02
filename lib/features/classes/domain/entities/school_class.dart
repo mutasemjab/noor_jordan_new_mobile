@@ -7,6 +7,7 @@ class SchoolClass extends Equatable {
   final String section;
   final int studentCount;
   final String subject;
+  final String? scheduleImage;
 
   const SchoolClass({
     required this.id,
@@ -15,10 +16,11 @@ class SchoolClass extends Equatable {
     required this.section,
     required this.studentCount,
     required this.subject,
+    this.scheduleImage,
   });
 
   @override
-  List<Object?> get props => [id, name, grade, section, studentCount, subject];
+  List<Object?> get props => [id, name, grade, section, studentCount, subject, scheduleImage];
 }
 
 class ClassStudent extends Equatable {

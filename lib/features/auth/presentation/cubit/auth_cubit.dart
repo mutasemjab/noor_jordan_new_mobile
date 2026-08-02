@@ -20,11 +20,11 @@ class AuthCubit extends Cubit<AuthState> {
   ) : super(const AuthInitial());
 
   Future<void> loginAsStudent({
-    required String phone,
+    required String nationalId,
     required String password,
   }) async {
     emit(const AuthLoading());
-    final result = await _loginStudent(phone: phone, password: password);
+    final result = await _loginStudent(nationalId: nationalId, password: password);
     result.fold(
       (failure) => _handleFailure(failure),
       (data) => emit(StudentAuthenticated(data.student)),
@@ -32,11 +32,11 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> loginAsTeacher({
-    required String email,
+    required String nationalId,
     required String password,
   }) async {
     emit(const AuthLoading());
-    final result = await _loginTeacher(email: email, password: password);
+    final result = await _loginTeacher(nationalId: nationalId, password: password);
     result.fold(
       (failure) => _handleFailure(failure),
       (data) => emit(TeacherAuthenticated(data.teacher)),

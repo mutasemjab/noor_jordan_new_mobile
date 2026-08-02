@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import '../../../classes/domain/entities/school_class.dart';
+import '../../../teacher_common/domain/entities/teacher_subject.dart';
 import '../../domain/entities/teacher_grades.dart';
 
 abstract class TeacherGradesState extends Equatable {
@@ -7,62 +9,29 @@ abstract class TeacherGradesState extends Equatable {
   List<Object?> get props => [];
 }
 
-class TeacherGradesInitial extends TeacherGradesState {}
-class TeacherGradesLoading extends TeacherGradesState {}
-
-class TeacherGradesClassesLoaded extends TeacherGradesState {
-  final List<GradeClass> classes;
-  const TeacherGradesClassesLoaded(this.classes);
-  @override
-  List<Object?> get props => [classes];
+/// No subject chosen yet — the caller should show the subject picker.
+class TeacherGradesInitial extends TeacherGradesState {
+  const TeacherGradesInitial();
 }
 
-class TeacherGradesExamTypesLoaded extends TeacherGradesState {
-  final List<GradeClass> classes;
-  final GradeClass selectedClass;
-  final List<GradeExamType> examTypes;
+class TeacherGradesLoading extends TeacherGradesState {
+  const TeacherGradesLoading();
+}
 
-  const TeacherGradesExamTypesLoaded({
-    required this.classes,
-    required this.selectedClass,
-    required this.examTypes,
+class TeacherGradesLoaded extends TeacherGradesState {
+  final TeacherSubject subject;
+  final List<ClassStudent> roster;
+  final List<GradeRecord> records;
+
+  const TeacherGradesLoaded({
+    required this.subject,
+    required this.roster,
+    required this.records,
   });
 
   @override
-  List<Object?> get props => [classes, selectedClass, examTypes];
+  List<Object?> get props => [subject, roster, records];
 }
-
-class TeacherGradesStudentsLoaded extends TeacherGradesState {
-  final List<GradeClass> classes;
-  final GradeClass selectedClass;
-  final List<GradeExamType> examTypes;
-  final GradeExamType selectedExamType;
-  final List<StudentGradeEntry> entries;
-
-  const TeacherGradesStudentsLoaded({
-    required this.classes,
-    required this.selectedClass,
-    required this.examTypes,
-    required this.selectedExamType,
-    required this.entries,
-  });
-
-  TeacherGradesStudentsLoaded copyWith({List<StudentGradeEntry>? entries}) {
-    return TeacherGradesStudentsLoaded(
-      classes: classes,
-      selectedClass: selectedClass,
-      examTypes: examTypes,
-      selectedExamType: selectedExamType,
-      entries: entries ?? this.entries,
-    );
-  }
-
-  @override
-  List<Object?> get props => [classes, selectedClass, examTypes, selectedExamType, entries];
-}
-
-class TeacherGradesSubmitting extends TeacherGradesState {}
-class TeacherGradesSubmitted extends TeacherGradesState {}
 
 class TeacherGradesError extends TeacherGradesState {
   final String message;

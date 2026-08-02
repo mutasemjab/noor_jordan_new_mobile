@@ -1,109 +1,68 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../classes/domain/entities/school_class.dart';
+import '../../../classes/domain/usecases/get_class_students_usecase.dart';
+import '../../../teacher_common/domain/entities/teacher_subject.dart';
 import '../../domain/entities/teacher_grades.dart';
-import '../../domain/usecases/get_grade_classes_usecase.dart';
-import '../../domain/usecases/submit_grades_usecase.dart';
-import '../../data/datasources/teacher_grades_remote_datasource.dart';
+import '../../domain/usecases/teacher_grades_usecases.dart';
 import 'teacher_grades_state.dart';
 
 class TeacherGradesCubit extends Cubit<TeacherGradesState> {
-  final GetGradeClassesUseCase _getClasses;
+  final GetTeacherGradesUseCase _getGrades;
   final SubmitGradesUseCase _submitGrades;
-  final TeacherGradesRemoteDataSource _remote;
+  final GetClassStudentsUseCase _getClassStudents;
+  final int classId;
 
-  TeacherGradesCubit(this._getClasses, this._submitGrades, this._remote)
-      : super(TeacherGradesInitial());
+  TeacherGradesCubit({
+    required this.classId,
+    required GetTeacherGradesUseCase getGrades,
+    required SubmitGradesUseCase submitGrades,
+    required GetClassStudentsUseCase getClassStudents,
+  })  : _getGrades = getGrades,
+        _submitGrades = submitGrades,
+        _getClassStudents = getClassStudents,
+        super(const TeacherGradesInitial());
 
-  Future<void> loadClasses() async {
-    emit(TeacherGradesLoading());
-    final result = await _getClasses();
-    result.fold(
+  Future<void> selectSubject(TeacherSubject subject) async {
+    emit(const TeacherGradesLoading());
+    final rosterResult = await _getClassStudents(classId);
+    final rosterFailure = rosterResult.fold((f) => f, (_) => null);
+    if (rosterFailure != null) {
+      emit(TeacherGradesError(rosterFailure.message));
+      return;
+    }
+    final roster = rosterResult.fold((_) => const <ClassStudent>[], (r) => r);
+
+    final gradesResult = await _getGrades(classId: classId, subjectId: subject.id);
+    gradesResult.fold(
       (f) => emit(TeacherGradesError(f.message)),
-      (classes) => emit(TeacherGradesClassesLoaded(classes)),
+      (records) => emit(TeacherGradesLoaded(subject: subject, roster: roster, records: records)),
     );
   }
 
-  Future<void> selectClass(GradeClass cls) async {
+  Future<void> refresh() async {
     final current = state;
-    List<GradeClass> classes = [];
-    if (current is TeacherGradesClassesLoaded) classes = current.classes;
-    if (current is TeacherGradesExamTypesLoaded) classes = current.classes;
-    if (current is TeacherGradesStudentsLoaded) classes = current.classes;
-
-    emit(TeacherGradesLoading());
-    try {
-      final examTypes = await _remote.getExamTypes(cls.classId);
-      emit(TeacherGradesExamTypesLoaded(classes: classes, selectedClass: cls, examTypes: examTypes));
-    } catch (e) {
-      emit(TeacherGradesError(e.toString()));
-    }
+    if (current is TeacherGradesLoaded) await selectSubject(current.subject);
   }
 
-  Future<void> selectExamType(GradeExamType examType) async {
+  Future<String?> submit({
+    required String title,
+    required double maxScore,
+    required DateTime gradedAt,
+    required List<GradeEntryInput> grades,
+  }) async {
     final current = state;
-    if (current is! TeacherGradesExamTypesLoaded) return;
-
-    emit(TeacherGradesLoading());
-    try {
-      final entries = await _remote.getStudentGrades(current.selectedClass.classId, examType.id);
-      emit(TeacherGradesStudentsLoaded(
-        classes: current.classes,
-        selectedClass: current.selectedClass,
-        examTypes: current.examTypes,
-        selectedExamType: examType,
-        entries: entries,
-      ));
-    } catch (e) {
-      emit(TeacherGradesError(e.toString()));
-    }
-  }
-
-  void updateScore(int studentId, double? score) {
-    final current = state;
-    if (current is! TeacherGradesStudentsLoaded) return;
-    final updated = current.entries.map((e) {
-      return e.studentId == studentId ? e.copyWith(score: score) : e;
-    }).toList();
-    emit(current.copyWith(entries: updated));
-  }
-
-  Future<void> submit() async {
-    final current = state;
-    if (current is! TeacherGradesStudentsLoaded) return;
-
-    emit(TeacherGradesSubmitting());
-    final grades = current.entries
-        .where((e) => e.score != null)
-        .map((e) => {'student_id': e.studentId, 'score': e.score})
-        .toList();
-
+    if (current is! TeacherGradesLoaded) return 'الرجاء اختيار المادة أولاً';
     final result = await _submitGrades(
-      classId: current.selectedClass.classId,
-      examTypeId: current.selectedExamType.id,
+      classId: classId,
+      subjectId: current.subject.id,
+      title: title,
+      maxScore: maxScore,
+      gradedAt: gradedAt,
       grades: grades,
     );
-
-    result.fold(
-      (f) => emit(TeacherGradesError(f.message)),
-      (_) => emit(TeacherGradesSubmitted()),
-    );
-  }
-
-  void backToExamTypes() {
-    final current = state;
-    if (current is TeacherGradesStudentsLoaded) {
-      emit(TeacherGradesExamTypesLoaded(
-        classes: current.classes,
-        selectedClass: current.selectedClass,
-        examTypes: current.examTypes,
-      ));
-    }
-  }
-
-  void backToClasses() {
-    final current = state;
-    List<GradeClass> classes = [];
-    if (current is TeacherGradesExamTypesLoaded) classes = current.classes;
-    if (current is TeacherGradesStudentsLoaded) classes = current.classes;
-    emit(TeacherGradesClassesLoaded(classes));
+    return result.fold((f) => f.message, (_) {
+      selectSubject(current.subject);
+      return null;
+    });
   }
 }

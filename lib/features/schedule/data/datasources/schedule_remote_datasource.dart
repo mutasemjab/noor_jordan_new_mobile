@@ -4,7 +4,7 @@ import '../../../../core/error/exceptions.dart';
 import '../models/schedule_models.dart';
 
 abstract class ScheduleRemoteDataSource {
-  Future<List<DayScheduleModel>> getSchedule();
+  Future<ClassScheduleModel> getSchedule();
 }
 
 class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
@@ -13,51 +13,35 @@ class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
   ScheduleRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<List<DayScheduleModel>> getSchedule() async {
+  Future<ClassScheduleModel> getSchedule() async {
     try {
       final response = await _dio.get(ApiEndpoints.studentSchedule);
+      final data = response.data;
 
-      if (response.statusCode != 200) {
-        throw ServerException(
-          'فشل تحميل الجدول الدراسي',
-          statusCode: response.statusCode,
-        );
-      }
-
-      final responseData = response.data;
-      List<dynamic> raw;
-
-      if (responseData is Map<String, dynamic>) {
-        final data = responseData['data'];
-        if (data is List<dynamic>) {
-          raw = data;
-        } else if (data is Map<String, dynamic>) {
-          raw = data.values.toList();
-        } else {
-          raw = [];
-        }
-      } else if (responseData is List<dynamic>) {
-        raw = responseData;
+      Map<String, dynamic> payload;
+      if (data is Map<String, dynamic> && data.containsKey('data')) {
+        payload = data['data'] as Map<String, dynamic>? ?? {};
+      } else if (data is Map<String, dynamic>) {
+        payload = data;
       } else {
-        raw = [];
+        payload = {};
       }
 
-      return raw
-          .whereType<Map<String, dynamic>>()
-          .map((e) => DayScheduleModel.fromJson(e))
-          .toList();
+      return ClassScheduleModel.fromJson(payload);
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
-          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw const NetworkException();
       }
       final statusCode = e.response?.statusCode;
       if (statusCode == 401) throw const UnauthorizedException();
       throw ServerException(
-        e.response?.data?['message'] as String? ?? 'حدث خطأ في الاتصال',
+        e.response?.data?['message'] as String? ?? 'حدث خطأ في السيرفر',
         statusCode: statusCode,
       );
+    } catch (e) {
+      throw ServerException(e.toString());
     }
   }
 }

@@ -8,9 +8,9 @@ class LoginTeacherUseCase {
   LoginTeacherUseCase(this._repo);
 
   Future<Either<Failure, ({String token, Teacher teacher})>> call({
-    required String email,
+    required String nationalId,
     required String password,
   }) {
-    return _repo.loginTeacher(email: email, password: password);
+    return _repo.loginTeacher(nationalId: nationalId, password: password);
   }
 }

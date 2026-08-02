@@ -1,302 +1,211 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
+import '../../../teacher_common/domain/entities/teacher_subject.dart';
+import '../../../teacher_common/presentation/widgets/subject_picker_field.dart';
 import '../../domain/entities/teacher_grades.dart';
 import '../cubit/teacher_grades_cubit.dart';
 import '../cubit/teacher_grades_state.dart';
+import 'teacher_grade_entry_form_page.dart';
 
 class TeacherGradesPage extends StatelessWidget {
-  const TeacherGradesPage({super.key});
+  final int classId;
+  final String className;
+
+  const TeacherGradesPage({super.key, required this.classId, required this.className});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<TeacherGradesCubit>()..loadClasses(),
-      child: const _GradesView(),
+      create: (_) => sl<TeacherGradesCubit>(param1: classId),
+      child: _TeacherGradesView(classId: classId, className: className),
     );
   }
 }
 
-class _GradesView extends StatelessWidget {
-  const _GradesView();
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocConsumer<TeacherGradesCubit, TeacherGradesState>(
-      listener: (context, state) {
-        if (state is TeacherGradesSubmitted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم حفظ الدرجات بنجاح', style: TextStyle(fontFamily: 'Cairo')),
-              backgroundColor: Colors.green,
-            ),
-          );
-          context.read<TeacherGradesCubit>().loadClasses();
-        }
-        if (state is TeacherGradesError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message, style: const TextStyle(fontFamily: 'Cairo')),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      },
-      builder: (context, state) {
-        String title = 'رصد الدرجات';
-        if (state is TeacherGradesExamTypesLoaded) title = state.selectedClass.className;
-        if (state is TeacherGradesStudentsLoaded) title = state.selectedExamType.name;
-
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: Text(title),
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            leading: (state is TeacherGradesExamTypesLoaded || state is TeacherGradesStudentsLoaded)
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                    onPressed: () {
-                      if (state is TeacherGradesStudentsLoaded) {
-                        context.read<TeacherGradesCubit>().backToExamTypes();
-                      } else {
-                        context.read<TeacherGradesCubit>().backToClasses();
-                      }
-                    },
-                  )
-                : null,
-          ),
-          body: _buildBody(context, state),
-          floatingActionButton: state is TeacherGradesStudentsLoaded
-              ? FloatingActionButton.extended(
-                  onPressed: () => context.read<TeacherGradesCubit>().submit(),
-                  backgroundColor: AppColors.primary,
-                  label: const Text('حفظ الدرجات', style: TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.w700)),
-                  icon: const Icon(Icons.save_rounded, color: Colors.white),
-                )
-              : null,
-        );
-      },
-    );
-  }
-
-  Widget _buildBody(BuildContext context, TeacherGradesState state) {
-    if (state is TeacherGradesLoading || state is TeacherGradesSubmitting) return const ShimmerList();
-    if (state is TeacherGradesError) {
-      return AppErrorWidget(
-        message: state.message,
-        onRetry: () => context.read<TeacherGradesCubit>().loadClasses(),
-      );
-    }
-    if (state is TeacherGradesClassesLoaded) return _ClassList(classes: state.classes);
-    if (state is TeacherGradesExamTypesLoaded) return _ExamTypeList(state: state);
-    if (state is TeacherGradesStudentsLoaded) return _StudentGradeList(state: state);
-    return const ShimmerList();
-  }
-}
-
-class _ClassList extends StatelessWidget {
-  final List<GradeClass> classes;
-  const _ClassList({required this.classes});
-
-  @override
-  Widget build(BuildContext context) {
-    if (classes.isEmpty) return const EmptyStateWidget(message: 'لا توجد فصول', icon: Icons.class_outlined);
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: classes.length,
-      itemBuilder: (_, i) {
-        final cls = classes[i];
-        return GestureDetector(
-          onTap: () => context.read<TeacherGradesCubit>().selectClass(cls),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.divider),
-              boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 4)],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.08), shape: BoxShape.circle),
-                  child: const Icon(Icons.class_rounded, color: AppColors.primary, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(cls.className, style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                      Text(cls.subject, style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textSecondary)),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.textSecondary),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ExamTypeList extends StatelessWidget {
-  final TeacherGradesExamTypesLoaded state;
-  const _ExamTypeList({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    if (state.examTypes.isEmpty) return const EmptyStateWidget(message: 'لا توجد أنواع اختبارات', icon: Icons.quiz_outlined);
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: state.examTypes.length,
-      itemBuilder: (_, i) {
-        final exam = state.examTypes[i];
-        return GestureDetector(
-          onTap: () => context.read<TeacherGradesCubit>().selectExamType(exam),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.divider),
-              boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 4)],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), shape: BoxShape.circle),
-                  child: const Icon(Icons.quiz_rounded, color: AppColors.accent, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(exam.name, style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                      Text('الدرجة الكاملة: ${exam.maxScore}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textSecondary)),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.textSecondary),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _StudentGradeList extends StatelessWidget {
-  final TeacherGradesStudentsLoaded state;
-  const _StudentGradeList({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    if (state.entries.isEmpty) return const EmptyStateWidget(message: 'لا يوجد طلاب', icon: Icons.people_outline_rounded);
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-      itemCount: state.entries.length,
-      itemBuilder: (_, i) {
-        final entry = state.entries[i];
-        return _GradeInputCard(
-          entry: entry,
-          maxScore: state.selectedExamType.maxScore,
-          onChanged: (v) => context.read<TeacherGradesCubit>().updateScore(entry.studentId, v),
-        );
-      },
-    );
-  }
-}
-
-class _GradeInputCard extends StatefulWidget {
-  final StudentGradeEntry entry;
+/// One graded exam, derived client-side by grouping [GradeRecord]s by title
+/// — the backend has no separate "exam" entity, so this is purely a display
+/// aggregation over the flat records list.
+class _ExamSummary {
+  final String title;
   final double maxScore;
-  final ValueChanged<double?> onChanged;
+  final DateTime? gradedAt;
+  final List<GradeRecord> entries;
 
-  const _GradeInputCard({required this.entry, required this.maxScore, required this.onChanged});
+  const _ExamSummary({required this.title, required this.maxScore, required this.gradedAt, required this.entries});
 
-  @override
-  State<_GradeInputCard> createState() => _GradeInputCardState();
+  double get average => entries.isEmpty ? 0 : entries.map((e) => e.score).reduce((a, b) => a + b) / entries.length;
 }
 
-class _GradeInputCardState extends State<_GradeInputCard> {
-  late final TextEditingController _ctrl;
+List<_ExamSummary> _groupByTitle(List<GradeRecord> records) {
+  final byTitle = <String, List<GradeRecord>>{};
+  for (final r in records) {
+    byTitle.putIfAbsent(r.title, () => []).add(r);
+  }
+  final summaries = byTitle.entries
+      .map((e) => _ExamSummary(
+            title: e.key,
+            maxScore: e.value.first.maxScore,
+            gradedAt: e.value.first.gradedAt,
+            entries: e.value,
+          ))
+      .toList();
+  summaries.sort((a, b) {
+    if (a.gradedAt == null || b.gradedAt == null) return 0;
+    return b.gradedAt!.compareTo(a.gradedAt!);
+  });
+  return summaries;
+}
+
+class _TeacherGradesView extends StatefulWidget {
+  final int classId;
+  final String className;
+  const _TeacherGradesView({required this.classId, required this.className});
 
   @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController(text: widget.entry.score?.toString() ?? '');
-  }
+  State<_TeacherGradesView> createState() => _TeacherGradesViewState();
+}
+
+class _TeacherGradesViewState extends State<_TeacherGradesView> {
+  TeacherSubject? _selectedSubject;
 
   @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text('العلامات — ${widget.className}', style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700, fontSize: 15)),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      ),
+      floatingActionButton: _selectedSubject == null
+          ? null
+          : FloatingActionButton.extended(
+              backgroundColor: AppColors.primary,
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
+              label: const Text('علامات جديدة', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700, color: Colors.white)),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider.value(
+                    value: context.read<TeacherGradesCubit>(),
+                    child: const TeacherGradeEntryFormPage(),
+                  ),
+                ),
+              ),
+            ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SubjectPickerField(
+              classId: widget.classId,
+              selectedSubjectId: _selectedSubject?.id,
+              onChanged: (subject) {
+                setState(() => _selectedSubject = subject);
+                if (subject != null) context.read<TeacherGradesCubit>().selectSubject(subject);
+              },
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _selectedSubject == null
+                  ? const EmptyStateWidget(message: 'اختر المادة لعرض العلامات', icon: Icons.grading_outlined)
+                  : BlocBuilder<TeacherGradesCubit, TeacherGradesState>(
+                      builder: (context, state) {
+                        if (state is TeacherGradesLoading || state is TeacherGradesInitial) return const ShimmerList();
+                        if (state is TeacherGradesError) {
+                          return AppErrorWidget(
+                            message: state.message,
+                            onRetry: () => context.read<TeacherGradesCubit>().selectSubject(_selectedSubject!),
+                          );
+                        }
+                        if (state is TeacherGradesLoaded) {
+                          final summaries = _groupByTitle(state.records);
+                          if (summaries.isEmpty) {
+                            return const EmptyStateWidget(message: 'لا توجد علامات مسجّلة بعد لهذه المادة', icon: Icons.grading_outlined);
+                          }
+                          return RefreshIndicator(
+                            color: AppColors.primary,
+                            onRefresh: () => context.read<TeacherGradesCubit>().refresh(),
+                            child: ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.only(bottom: 90),
+                              itemCount: summaries.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                              itemBuilder: (_, i) => _ExamSummaryCard(summary: summaries[i]),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
+}
+
+class _ExamSummaryCard extends StatelessWidget {
+  final _ExamSummary summary;
+  const _ExamSummaryCard({required this.summary});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.divider),
-        boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 4)],
       ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
-            child: Text(
-              widget.entry.studentName.isNotEmpty ? widget.entry.studentName[0] : '?',
-              style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700, color: AppColors.primary),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: context.read<TeacherGradesCubit>(),
+              child: TeacherGradeEntryFormPage(existingTitle: summary.title),
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(widget.entry.studentName,
-                style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          ),
-          SizedBox(
-            width: 80,
-            child: TextField(
-              controller: _ctrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textAlign: TextAlign.center,
-              onChanged: (v) {
-                final d = double.tryParse(v);
-                if (d == null || d < 0 || d > widget.maxScore) return;
-                widget.onChanged(d);
-              },
-              decoration: InputDecoration(
-                hintText: '/ ${widget.maxScore.toStringAsFixed(0)}',
-                hintStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textSecondary),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.divider)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.divider)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.grading_rounded, color: AppColors.accentDark, size: 22),
               ),
-              style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(summary.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${summary.entries.length} طالب • من ${summary.maxScore.toStringAsFixed(0)} • المعدل ${summary.average.toStringAsFixed(1)}'
+                      '${summary.gradedAt != null ? ' • ${DateFormat('d MMM yyyy', 'ar').format(summary.gradedAt!)}' : ''}',
+                      style: const TextStyle(fontFamily: 'Cairo', fontSize: 11.5, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textSecondary),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

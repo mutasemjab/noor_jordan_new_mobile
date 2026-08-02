@@ -36,12 +36,25 @@ class TeacherAttendanceRemoteDataSourceImpl implements TeacherAttendanceRemoteDa
   @override
   Future<List<AttendanceEntryModel>> getStudents(int classId) async {
     try {
-      final response = await _dio.get(ApiEndpoints.teacherAttendanceStudents(classId));
+      final response = await _dio.get(ApiEndpoints.teacherClassStudents(classId));
       final data = response.data;
       List<dynamic> list;
-      if (data is Map) list = (data['data'] ?? data['students'] ?? []) as List<dynamic>;
-      else if (data is List) list = data;
-      else list = [];
+      if (data is Map) {
+        final inner = data['data'];
+        if (inner is List) {
+          list = inner;
+        } else if (inner is Map && inner['students'] is List) {
+          list = inner['students'] as List<dynamic>;
+        } else if (data['students'] is List) {
+          list = data['students'] as List<dynamic>;
+        } else {
+          list = [];
+        }
+      } else if (data is List) {
+        list = data;
+      } else {
+        list = [];
+      }
       return list.map((e) => AttendanceEntryModel.fromJson(e as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError) throw const NetworkException();

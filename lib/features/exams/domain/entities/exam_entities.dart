@@ -25,24 +25,42 @@ class ExamQuestion extends Equatable {
   List<Object?> get props => [id, questionText, options];
 }
 
+class ExamSubjectRef extends Equatable {
+  final int? id;
+  final String name;
+
+  const ExamSubjectRef({this.id, required this.name});
+
+  @override
+  List<Object?> get props => [id, name];
+}
+
 class Exam extends Equatable {
   final int id;
   final String title;
+  final String? description;
+  final String examType; // mock | unit | final | practice | previous_years | placement
+  final int totalQuestions;
   final int durationMinutes;
-  final int questionsCount;
-  final String status;
-  final DateTime? startDate;
-  final DateTime? endDate;
+  final int totalMarks;
+  final int? passMarks;
+  final String? difficultyLevel;
+  final bool showResultImmediately;
+  final ExamSubjectRef? subject;
   final List<ExamQuestion> questions;
 
   const Exam({
     required this.id,
     required this.title,
-    required this.durationMinutes,
-    required this.questionsCount,
-    required this.status,
-    this.startDate,
-    this.endDate,
+    this.description,
+    this.examType = 'unit',
+    this.totalQuestions = 0,
+    this.durationMinutes = 0,
+    this.totalMarks = 0,
+    this.passMarks,
+    this.difficultyLevel,
+    this.showResultImmediately = false,
+    this.subject,
     this.questions = const [],
   });
 
@@ -50,11 +68,15 @@ class Exam extends Equatable {
   List<Object?> get props => [
         id,
         title,
+        description,
+        examType,
+        totalQuestions,
         durationMinutes,
-        questionsCount,
-        status,
-        startDate,
-        endDate,
+        totalMarks,
+        passMarks,
+        difficultyLevel,
+        showResultImmediately,
+        subject,
         questions,
       ];
 }
@@ -105,20 +127,25 @@ class ExamAttempt extends Equatable {
       ];
 }
 
+/// A submitted exam attempt, as returned by GET /my-exams.
 class MyExam extends Equatable {
-  final int? attemptId;
+  final int attemptId;
   final Exam exam;
-  final double? score;
-  final double? percentage;
-  final bool? isPassed;
+  final double score;
+  final double totalMarks;
+  final double percentage;
+  final bool isPassed;
+  final int? timeTakenMinutes;
   final DateTime? submittedAt;
 
   const MyExam({
-    this.attemptId,
+    required this.attemptId,
     required this.exam,
-    this.score,
-    this.percentage,
-    this.isPassed,
+    required this.score,
+    required this.totalMarks,
+    required this.percentage,
+    required this.isPassed,
+    this.timeTakenMinutes,
     this.submittedAt,
   });
 
@@ -127,8 +154,10 @@ class MyExam extends Equatable {
         attemptId,
         exam,
         score,
+        totalMarks,
         percentage,
         isPassed,
+        timeTakenMinutes,
         submittedAt,
       ];
 }

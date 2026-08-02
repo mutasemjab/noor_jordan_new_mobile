@@ -20,7 +20,7 @@ class StudentLoginPage extends StatefulWidget {
 class _StudentLoginPageState extends State<StudentLoginPage>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _phoneCtrl = TextEditingController();
+  final _nationalIdCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   late List<AnimationController> _fieldControllers;
   late List<Animation<double>> _fieldFades;
@@ -48,7 +48,7 @@ class _StudentLoginPageState extends State<StudentLoginPage>
 
   @override
   void dispose() {
-    _phoneCtrl.dispose();
+    _nationalIdCtrl.dispose();
     _passwordCtrl.dispose();
     for (final c in _fieldControllers) c.dispose();
     super.dispose();
@@ -108,17 +108,17 @@ class _StudentLoginPageState extends State<StudentLoginPage>
                       ]),
                     ),
                     const SizedBox(height: 40),
-                    // Phone Field
+                    // National ID Field
                     _buildAnimatedField(
                       index: 1,
                       child: AppTextField(
-                        label: 'رقم الهاتف',
-                        hint: '07XXXXXXXX',
-                        controller: _phoneCtrl,
-                        keyboardType: TextInputType.phone,
+                        label: 'الرقم الوطني',
+                        hint: 'أدخل الرقم الوطني',
+                        controller: _nationalIdCtrl,
+                        keyboardType: TextInputType.number,
                         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.primary, size: 20),
-                        validator: Validators.validatePhone,
+                        prefixIcon: const Icon(Icons.badge_outlined, color: AppColors.primary, size: 20),
+                        validator: Validators.validateNationalId,
                         textInputAction: TextInputAction.next,
                       ),
                     ),
@@ -180,7 +180,7 @@ class _StudentLoginPageState extends State<StudentLoginPage>
   void _submit(BuildContext context) {
     if (_formKey.currentState?.validate() != true) return;
     context.read<AuthCubit>().loginAsStudent(
-          phone: _phoneCtrl.text.trim(),
+          nationalId: _nationalIdCtrl.text.trim(),
           password: _passwordCtrl.text,
         );
   }

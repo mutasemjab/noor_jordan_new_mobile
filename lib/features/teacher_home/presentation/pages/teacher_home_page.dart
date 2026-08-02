@@ -1,13 +1,19 @@
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
+import '../../../../core/widgets/fullscreen_image_viewer.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/stat_card.dart';
+import '../../../classes/domain/entities/school_class.dart';
+import '../../../home/domain/entities/home_data.dart' as home_data show Banner;
 import '../../domain/entities/teacher_home_data.dart';
 import '../cubit/teacher_home_cubit.dart';
 import '../cubit/teacher_home_state.dart';
@@ -45,6 +51,10 @@ class _TeacherHomeView extends StatelessWidget {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white),
+            onPressed: () => context.push('/teacher-messages'),
+          ),
           IconButton(
             icon: const Icon(Icons.person_outline_rounded, color: Colors.white),
             onPressed: () => context.push('/teacher-profile'),
@@ -89,24 +99,29 @@ class _HomeContent extends StatelessWidget {
             _WelcomeCard(data: data),
             const SizedBox(height: 16),
             _StatsRow(stats: data.stats),
-            const SizedBox(height: 20),
-            SectionHeader(
-              title: 'جدول اليوم',
-              actionLabel: 'الكل',
-              onAction: () => context.go('/teacher-schedule'),
-            ),
-            const SizedBox(height: 12),
-            _TodaySchedule(periods: data.todaySchedule),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            _TripsBanner(onTap: () => context.push('/teacher-trips')),
+            const SizedBox(height: 22),
             SectionHeader(
               title: 'الإعلانات',
               actionLabel: 'عرض الكل',
               onAction: () => context.push('/teacher-announcements'),
             ),
-            const SizedBox(height: 8),
-            _AnnouncementsBanner(
-              onTap: () => context.push('/teacher-announcements'),
-            ),
+            const SizedBox(height: 12),
+            if (data.banners.isNotEmpty)
+              _BannerCarousel(banners: data.banners)
+            else
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: EmptyStateWidget(
+                  message: 'لا توجد إعلانات حالياً',
+                  icon: Icons.campaign_outlined,
+                ),
+              ),
+            const SizedBox(height: 22),
+            const SectionHeader(title: 'جداول الصفوف'),
+            const SizedBox(height: 12),
+            _ClassSchedulesSection(classes: data.classes),
             const SizedBox(height: 24),
           ],
         ),
@@ -289,144 +304,9 @@ class _StatsRow extends StatelessWidget {
   }
 }
 
-class _TodaySchedule extends StatelessWidget {
-  final List<TodayPeriod> periods;
-  const _TodaySchedule({required this.periods});
-
-  @override
-  Widget build(BuildContext context) {
-    if (periods.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Center(
-          child: Text(
-            'لا توجد حصص اليوم',
-            style: TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ),
-      );
-    }
-    return SizedBox(
-      height: 140,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: periods.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) =>
-            _PeriodCard(period: periods[index]),
-      ),
-    );
-  }
-}
-
-class _PeriodCard extends StatelessWidget {
-  final TodayPeriod period;
-  const _PeriodCard({required this.period});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 170,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${period.startTime} - ${period.endTime}',
-                style: const TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${period.periodNumber}',
-                  style: const TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              period.className,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.accentDark,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              period.subjectName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AnnouncementsBanner extends StatelessWidget {
+class _TripsBanner extends StatelessWidget {
   final VoidCallback onTap;
-  const _AnnouncementsBanner({required this.onTap});
+  const _TripsBanner({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -437,55 +317,32 @@ class _AnnouncementsBanner extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              AppColors.accent.withOpacity(0.15),
-              AppColors.accent.withOpacity(0.05),
-            ],
+            colors: [AppColors.present.withOpacity(0.15), AppColors.present.withOpacity(0.05)],
             begin: Alignment.centerRight,
             end: Alignment.centerLeft,
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+          border: Border.all(color: AppColors.present.withOpacity(0.3)),
         ),
         child: Row(
           children: [
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.campaign_rounded,
-                  color: AppColors.accentDark, size: 24),
+              decoration: BoxDecoration(color: AppColors.present.withOpacity(0.2), shape: BoxShape.circle),
+              child: const Icon(Icons.directions_bus_rounded, color: AppColors.present, size: 24),
             ),
             const SizedBox(width: 12),
             const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'الإعلانات',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    'اطّلع على آخر الإعلانات المدرسية',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  Text('جولاتي', style: TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  Text('تتبع جولة الباص المباشر', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_back_ios_rounded,
-                size: 16, color: AppColors.textSecondary),
+            const Icon(Icons.arrow_back_ios_rounded, size: 16, color: AppColors.textSecondary),
           ],
         ),
       ),
@@ -493,5 +350,250 @@ class _AnnouncementsBanner extends StatelessWidget {
   }
 }
 
-// ignore: unused_element
-const _accentDark = AppColors.accentDark;
+class _BannerCarousel extends StatefulWidget {
+  final List<home_data.Banner> banners;
+  const _BannerCarousel({required this.banners});
+
+  @override
+  State<_BannerCarousel> createState() => _BannerCarouselState();
+}
+
+class _BannerCarouselState extends State<_BannerCarousel> {
+  late final PageController _pageController;
+  int _currentIndex = 0;
+  Timer? _autoScrollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    if (widget.banners.length > 1) {
+      _startAutoScroll();
+    }
+  }
+
+  void _startAutoScroll() {
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted) return;
+      final next = (_currentIndex + 1) % widget.banners.length;
+      _pageController.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoScrollTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.banners.length,
+            onPageChanged: (i) => setState(() => _currentIndex = i),
+            itemBuilder: (context, index) {
+              final banner = widget.banners[index];
+              return GestureDetector(
+                onTap: banner.link != null
+                    ? () => context.push(banner.link!)
+                    : null,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: AppColors.divider,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: banner.image.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: banner.image,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          placeholder: (context, url) => Container(
+                            color: AppColors.divider,
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: AppColors.divider,
+                            child: const Icon(Icons.image_not_supported_outlined,
+                                color: AppColors.textSecondary, size: 40),
+                          ),
+                        )
+                      : Container(
+                          color: AppColors.primary.withOpacity(0.1),
+                          child: const Icon(Icons.image_outlined,
+                              color: AppColors.textSecondary, size: 40),
+                        ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (widget.banners.length > 1) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.banners.length, (index) {
+              final isActive = index == _currentIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isActive ? 20 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.accent : AppColors.divider,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ClassSchedulesSection extends StatelessWidget {
+  final List<SchoolClass> classes;
+  const _ClassSchedulesSection({required this.classes});
+
+  @override
+  Widget build(BuildContext context) {
+    if (classes.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: EmptyStateWidget(
+          message: 'لا توجد صفوف بعد',
+          icon: Icons.class_outlined,
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: classes
+            .map((cls) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ClassScheduleCard(schoolClass: cls),
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _ClassScheduleCard extends StatelessWidget {
+  final SchoolClass schoolClass;
+  const _ClassScheduleCard({required this.schoolClass});
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = schoolClass.scheduleImage;
+    final heroTag = 'teacher-class-schedule-${schoolClass.id}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    schoolClass.name,
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                if (schoolClass.subject.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    schoolClass.subject,
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (imageUrl == null || imageUrl.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
+              child: Text(
+                'لم يتم رفع جدول هذا الصف بعد',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 12.5,
+                  color: AppColors.textSecondary.withOpacity(0.8),
+                ),
+              ),
+            )
+          else
+            GestureDetector(
+              onTap: () => FullscreenImageViewer.open(
+                context,
+                imageUrl,
+                heroTag: heroTag,
+                title: schoolClass.name,
+              ),
+              child: Hero(
+                tag: heroTag,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Container(
+                    height: 160,
+                    color: AppColors.divider,
+                    child: const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+                    ),
+                  ),
+                  errorWidget: (_, __, ___) => Container(
+                    height: 160,
+                    color: AppColors.divider,
+                    child: const Icon(Icons.image_not_supported_outlined,
+                        color: AppColors.textSecondary, size: 36),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

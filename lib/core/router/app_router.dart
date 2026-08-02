@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/pages/splash_page.dart';
@@ -27,19 +28,24 @@ import '../../features/announcements/presentation/pages/announcement_detail_page
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/files/presentation/pages/files_page.dart';
 import '../../features/educational_notes/presentation/pages/educational_notes_page.dart';
+import '../../features/exam_schedules/presentation/pages/exam_schedules_page.dart';
+import '../../features/chat/presentation/pages/conversations_list_page.dart';
+import '../../features/chat/presentation/pages/student_teacher_list_page.dart';
+import '../../features/chat/presentation/pages/teacher_chat_contacts_page.dart';
 
 // Teacher shell + pages
 import '../../features/teacher_home/presentation/pages/teacher_home_page.dart';
-import '../../features/teacher_schedule/presentation/pages/teacher_schedule_page.dart';
 import '../../features/classes/presentation/pages/classes_page.dart';
-import '../../features/teacher_attendance/presentation/pages/teacher_attendance_page.dart';
-import '../../features/teacher_grades/presentation/pages/teacher_grades_page.dart';
 import '../../features/teacher_profile/presentation/pages/teacher_profile_page.dart';
 import '../../features/subjects/domain/entities/subject.dart';
 import '../../features/subjects/domain/entities/subject_video.dart';
-import '../../features/exams/domain/entities/exam.dart';
+import '../../features/exams/domain/entities/exam_entities.dart';
+import '../../features/exams/presentation/cubit/exams_cubit.dart';
+import '../../features/teacher_trips/presentation/pages/teacher_trips_page.dart';
+import '../../features/student_trip/presentation/pages/bus_tracking_page.dart';
 
 import '../constants/app_colors.dart';
+import '../di/injection.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _studentShellKey = GlobalKey<NavigatorState>();
@@ -77,16 +83,12 @@ final appRouter = GoRouter(
           pageBuilder: (_, state) => _fadePage(state, const StudentHomePage()),
         ),
         GoRoute(
-          path: '/schedule',
-          pageBuilder: (_, state) => _fadePage(state, const SchedulePage()),
+          path: '/educational-notes',
+          pageBuilder: (_, state) => _fadePage(state, const EducationalNotesPage()),
         ),
         GoRoute(
-          path: '/grades',
-          pageBuilder: (_, state) => _fadePage(state, const GradesPage()),
-        ),
-        GoRoute(
-          path: '/attendance',
-          pageBuilder: (_, state) => _fadePage(state, const AttendancePage()),
+          path: '/announcements',
+          pageBuilder: (_, state) => _fadePage(state, const AnnouncementsPage()),
         ),
         GoRoute(
           path: '/profile',
@@ -97,13 +99,25 @@ final appRouter = GoRouter(
 
     // ── Student Extra Routes (outside shell, full-screen) ──
     GoRoute(
+      path: '/schedule',
+      pageBuilder: (_, state) => _slidePage(state, const SchedulePage()),
+    ),
+    GoRoute(
+      path: '/grades',
+      pageBuilder: (_, state) => _slidePage(state, const GradesPage()),
+    ),
+    GoRoute(
+      path: '/attendance',
+      pageBuilder: (_, state) => _slidePage(state, const AttendancePage()),
+    ),
+    GoRoute(
       path: '/subjects',
       pageBuilder: (_, state) => _slidePage(state, const SubjectsPage()),
     ),
     GoRoute(
       path: '/subjects/:id/videos',
       pageBuilder: (_, state) {
-        final subject = state.extra as Subject?;
+        final subject = state.extra as Subject;
         return _slidePage(state, SubjectVideosPage(subject: subject));
       },
     ),
@@ -118,28 +132,35 @@ final appRouter = GoRouter(
       path: '/exams',
       pageBuilder: (_, state) => _slidePage(state, const ExamsPage()),
     ),
-    GoRoute(
-      path: '/exams/:id',
-      pageBuilder: (_, state) {
-        final exam = state.extra as Exam?;
-        return _slidePage(state, ExamDetailPage(exam: exam));
-      },
-    ),
-    GoRoute(
-      path: '/exam-taking',
-      pageBuilder: (_, state) => _slidePage(state, const ExamTakingPage()),
-    ),
-    GoRoute(
-      path: '/exam-result',
-      pageBuilder: (_, state) => _slidePage(state, const ExamResultPage()),
+    // Exam detail → taking → result all share one ExamsCubit instance so the
+    // in-progress attempt (and its state transitions) survives context.go()
+    // between these routes, which otherwise unmounts per-route providers.
+    ShellRoute(
+      builder: (context, state, child) => BlocProvider(
+        create: (_) => sl<ExamsCubit>(),
+        child: child,
+      ),
+      routes: [
+        GoRoute(
+          path: '/exams/:id',
+          pageBuilder: (_, state) {
+            final exam = state.extra as Exam?;
+            return _slidePage(state, ExamDetailPage(exam: exam));
+          },
+        ),
+        GoRoute(
+          path: '/exam-taking',
+          pageBuilder: (_, state) => _slidePage(state, const ExamTakingPage()),
+        ),
+        GoRoute(
+          path: '/exam-result',
+          pageBuilder: (_, state) => _slidePage(state, const ExamResultPage()),
+        ),
+      ],
     ),
     GoRoute(
       path: '/contract',
       pageBuilder: (_, state) => _slidePage(state, const ContractPage()),
-    ),
-    GoRoute(
-      path: '/announcements',
-      pageBuilder: (_, state) => _slidePage(state, const AnnouncementsPage()),
     ),
     GoRoute(
       path: '/announcements/:id',
@@ -154,8 +175,25 @@ final appRouter = GoRouter(
       pageBuilder: (_, state) => _slidePage(state, const FilesPage()),
     ),
     GoRoute(
-      path: '/educational-notes',
-      pageBuilder: (_, state) => _slidePage(state, const EducationalNotesPage()),
+      path: '/exam-schedules',
+      pageBuilder: (_, state) => _slidePage(state, const ExamSchedulesPage()),
+    ),
+    GoRoute(
+      path: '/messages',
+      pageBuilder: (context, state) => _slidePage(
+        state,
+        ConversationsListPage(
+          onStartNewChat: () => context.push('/student-teachers'),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/student-teachers',
+      pageBuilder: (_, state) => _slidePage(state, const StudentTeacherListPage()),
+    ),
+    GoRoute(
+      path: '/bus-tracking',
+      pageBuilder: (_, state) => _slidePage(state, const BusTrackingPage()),
     ),
 
     // ── Teacher Shell ──────────────────────────────
@@ -168,20 +206,8 @@ final appRouter = GoRouter(
           pageBuilder: (_, state) => _fadePage(state, const TeacherHomePage()),
         ),
         GoRoute(
-          path: '/teacher-schedule',
-          pageBuilder: (_, state) => _fadePage(state, const TeacherSchedulePage()),
-        ),
-        GoRoute(
           path: '/teacher-classes',
           pageBuilder: (_, state) => _fadePage(state, const ClassesPage()),
-        ),
-        GoRoute(
-          path: '/teacher-attendance',
-          pageBuilder: (_, state) => _fadePage(state, const TeacherAttendancePage()),
-        ),
-        GoRoute(
-          path: '/teacher-grades',
-          pageBuilder: (_, state) => _fadePage(state, const TeacherGradesPage()),
         ),
       ],
     ),
@@ -194,6 +220,24 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/teacher-announcements',
       pageBuilder: (_, state) => _slidePage(state, const AnnouncementsPage(isTeacher: true)),
+    ),
+    GoRoute(
+      path: '/teacher-messages',
+      pageBuilder: (context, state) => _slidePage(
+        state,
+        ConversationsListPage(
+          isTeacher: true,
+          onStartNewChat: () => context.push('/teacher-chat-contacts'),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/teacher-chat-contacts',
+      pageBuilder: (_, state) => _slidePage(state, const TeacherChatContactsPage()),
+    ),
+    GoRoute(
+      path: '/teacher-trips',
+      pageBuilder: (_, state) => _slidePage(state, const TeacherTripsPage()),
     ),
   ],
 );
@@ -238,7 +282,14 @@ class StudentScaffold extends StatefulWidget {
 }
 
 class _StudentScaffoldState extends State<StudentScaffold> {
-  static const _tabs = ['/home', '/schedule', '/grades', '/attendance', '/profile'];
+  static const _tabs = ['/home', '/educational-notes', '/announcements', '/profile'];
+
+  static const _items = [
+    _NavItemData(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'الرئيسية'),
+    _NavItemData(icon: Icons.sticky_note_2_outlined, activeIcon: Icons.sticky_note_2_rounded, label: 'مفكرتي'),
+    _NavItemData(icon: Icons.campaign_outlined, activeIcon: Icons.campaign_rounded, label: 'الإعلانات'),
+    _NavItemData(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'حسابي'),
+  ];
 
   int _currentIndex(BuildContext context) {
     final loc = GoRouterState.of(context).uri.toString();
@@ -253,28 +304,10 @@ class _StudentScaffoldState extends State<StudentScaffold> {
     final index = _currentIndex(context);
     return Scaffold(
       body: widget.child,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 12, offset: Offset(0, -2))],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: index,
-          onTap: (i) => context.go(_tabs[i]),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: 'الرئيسية'),
-            BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today_rounded), label: 'الجدول'),
-            BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart_rounded), label: 'العلامات'),
-            BottomNavigationBarItem(icon: Icon(Icons.fact_check_outlined), activeIcon: Icon(Icons.fact_check_rounded), label: 'الحضور'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), activeIcon: Icon(Icons.person_rounded), label: 'حسابي'),
-          ],
-        ),
+      bottomNavigationBar: _ModernBottomNav(
+        items: _items,
+        currentIndex: index,
+        onTap: (i) => context.go(_tabs[i]),
       ),
     );
   }
@@ -293,10 +326,12 @@ class TeacherScaffold extends StatefulWidget {
 class _TeacherScaffoldState extends State<TeacherScaffold> {
   static const _tabs = [
     '/teacher-home',
-    '/teacher-schedule',
     '/teacher-classes',
-    '/teacher-attendance',
-    '/teacher-grades',
+  ];
+
+  static const _items = [
+    _NavItemData(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'الرئيسية'),
+    _NavItemData(icon: Icons.class_outlined, activeIcon: Icons.class_rounded, label: 'صفوفي'),
   ];
 
   int _currentIndex(BuildContext context) {
@@ -312,27 +347,92 @@ class _TeacherScaffoldState extends State<TeacherScaffold> {
     final index = _currentIndex(context);
     return Scaffold(
       body: widget.child,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 12, offset: Offset(0, -2))],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: index,
-          onTap: (i) => context.go(_tabs[i]),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: 'الرئيسية'),
-            BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today_rounded), label: 'جدولي'),
-            BottomNavigationBarItem(icon: Icon(Icons.class_outlined), activeIcon: Icon(Icons.class_rounded), label: 'صفوفي'),
-            BottomNavigationBarItem(icon: Icon(Icons.fact_check_outlined), activeIcon: Icon(Icons.fact_check_rounded), label: 'الغياب'),
-            BottomNavigationBarItem(icon: Icon(Icons.grading_outlined), activeIcon: Icon(Icons.grading_rounded), label: 'العلامات'),
-          ],
+      bottomNavigationBar: _ModernBottomNav(
+        items: _items,
+        currentIndex: index,
+        onTap: (i) => context.go(_tabs[i]),
+      ),
+    );
+  }
+}
+
+// ── Shared modern bottom nav ────────────────────────────────────────────────
+
+class _NavItemData {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  const _NavItemData({required this.icon, required this.activeIcon, required this.label});
+}
+
+class _ModernBottomNav extends StatelessWidget {
+  final List<_NavItemData> items;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _ModernBottomNav({
+    required this.items,
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withOpacity(0.10), blurRadius: 20, offset: const Offset(0, -6)),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Row(
+            children: List.generate(items.length, (i) {
+              final selected = i == currentIndex;
+              final item = items[i];
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onTap(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: selected ? AppColors.primary.withOpacity(0.10) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          selected ? item.activeIcon : item.icon,
+                          color: selected ? AppColors.primary : AppColors.textSecondary,
+                          size: 22,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 10.5,
+                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                            color: selected ? AppColors.primary : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
