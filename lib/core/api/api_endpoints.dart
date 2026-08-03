@@ -1,7 +1,7 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
-  static const String baseUrl = 'https://noor.mutasemjaber.online/api';
+  static const String baseUrl = 'https://noor-jordan.com/api';
 
   // Student Auth
   static const String studentLogin = '/v1/student/auth/login';

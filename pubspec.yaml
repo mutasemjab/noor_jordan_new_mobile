@@ -1,7 +1,7 @@
 name: noor
 description: "مدارس نور الأردن الدولية - Noor Jordan International Schools"
 publish_to: "none"
-version: 1.0.0+1
+version: 2.0.0+1
 
 environment:
   sdk: ">=3.2.3 <4.0.0"
@@ -87,6 +87,12 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   injectable_generator: ^2.7.0
   build_runner: ^2.4.13
+  flutter_launcher_icons: "^0.14.4"
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
 
 dependency_overrides:
   win32: ^5.0.0
