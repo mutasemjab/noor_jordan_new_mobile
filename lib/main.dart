@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:noor/firebase_options.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/di/injection.dart';
@@ -48,7 +49,8 @@ Future<void> main() async {
   );
 
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     await _initLocalNotifications();
     _listenForegroundMessages();
@@ -69,7 +71,8 @@ Future<void> _initLocalNotifications() async {
     requestBadgePermission: true,
     requestSoundPermission: true,
   );
-  const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
+  const initSettings =
+      InitializationSettings(android: androidInit, iOS: iosInit);
   await localNotificationsPlugin.initialize(
     initSettings,
     onDidReceiveNotificationResponse: (response) {
@@ -93,7 +96,8 @@ Future<void> _initLocalNotifications() async {
     sound: RawResourceAndroidNotificationSound('school_bell'),
   );
   await localNotificationsPlugin
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(bellChannel);
 }
 
@@ -132,13 +136,15 @@ void _listenForegroundMessages() {
 /// (onMessageOpenedApp) and when it was launched cold from a terminated
 /// state by tapping the notification (getInitialMessage).
 void _listenNotificationTaps() {
-  FirebaseMessaging.onMessageOpenedApp.listen((message) => _routePushTap(message.data));
+  FirebaseMessaging.onMessageOpenedApp
+      .listen((message) => _routePushTap(message.data));
 
   FirebaseMessaging.instance.getInitialMessage().then((message) {
     if (message == null) return;
     // The router isn't attached yet at this point in a cold start — wait
     // for the first frame before pushing.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _routePushTap(message.data));
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _routePushTap(message.data));
   });
 }
 

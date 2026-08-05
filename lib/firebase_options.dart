@@ -29,19 +29,18 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT.appspot.com',
+    apiKey: 'AIzaSyAJHJHlfpOBZrmrjnyJ4HXXeEeHt5yjvw0',
+    appId: '1:998389060248:android:be3243e958710228c676ed',
+    messagingSenderId: '998389060248',
+    projectId: 'noor-9754e',
+    storageBucket: 'noor-9754e.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT.appspot.com',
-    iosBundleId: 'com.example.noor',
+    apiKey: 'AIzaSyCaERBcBlTr3gg0BhT0LHiFqjUN1heiZPw',
+    appId: '1:998389060248:ios:d41a33a164400408c676ed',
+    messagingSenderId: '998389060248',
+    projectId: 'noor-9754e',
+    storageBucket: 'noor-9754e.firebasestorage.app',
+    iosBundleId: 'com.school.noor',
   );
 }

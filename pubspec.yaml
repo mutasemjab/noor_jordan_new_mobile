@@ -1,7 +1,7 @@
 name: noor
 description: "مدارس نور الأردن الدولية - Noor Jordan International Schools"
 publish_to: "none"
-version: 2.0.0+1
+version: 7.0.0+200
 
 environment:
   sdk: ">=3.2.3 <4.0.0"
@@ -102,6 +102,6 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/lottie/
+
 
   # Using google_fonts package for Cairo — no local font files needed
