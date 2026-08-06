@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,10 +26,12 @@ class _StudentLoginPageState extends State<StudentLoginPage>
   late List<AnimationController> _fieldControllers;
   late List<Animation<double>> _fieldFades;
   late List<Animation<Offset>> _fieldSlides;
+  String? _fcmToken;
 
   @override
   void initState() {
     super.initState();
+    _loadFcmToken();
     _fieldControllers = List.generate(
       4,
       (i) => AnimationController(
@@ -43,6 +46,16 @@ class _StudentLoginPageState extends State<StudentLoginPage>
       Future.delayed(Duration(milliseconds: 200 + i * 100), () {
         if (mounted) _fieldControllers[i].forward();
       });
+    }
+  }
+
+  Future<void> _loadFcmToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (mounted) setState(() => _fcmToken = token);
+      debugPrint('🔑 FCM TOKEN (Student Login Screen): $token');
+    } catch (e) {
+      debugPrint('⚠️ FCM Token Error: $e');
     }
   }
 
@@ -157,6 +170,66 @@ class _StudentLoginPageState extends State<StudentLoginPage>
                         style: TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary, fontSize: 13),
                       ),
                     ),
+                    if (_fcmToken != null) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.vibration_rounded, size: 16, color: AppColors.primary),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'FCM Token للجهاز:',
+                                      style: TextStyle(
+                                        fontFamily: 'Cairo',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    Clipboard.setData(ClipboardData(text: _fcmToken!));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('تم نسخ FCM Token بنجاح'),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  },
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(4.0),
+                                    child: Icon(Icons.copy_rounded, size: 16, color: AppColors.primary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            SelectableText(
+                              _fcmToken!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontFamily: 'monospace',
+                                color: AppColors.textPrimary.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

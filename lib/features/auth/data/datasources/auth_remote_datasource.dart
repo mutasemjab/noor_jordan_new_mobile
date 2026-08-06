@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/student_model.dart';
@@ -8,11 +10,13 @@ abstract class AuthRemoteDataSource {
   Future<({String token, StudentModel student})> loginStudent({
     required String nationalId,
     required String password,
+    String? fcmToken,
   });
 
   Future<({String token, TeacherModel teacher})> loginTeacher({
     required String nationalId,
     required String password,
+    String? fcmToken,
   });
 
   Future<({String token, StudentModel student})> switchSibling(int siblingId);
@@ -24,15 +28,34 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final Dio _dio;
   AuthRemoteDataSourceImpl(this._dio);
 
+  Future<String?> _getFcmToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      debugPrint('🔑 ================= FCM TOKEN ================= 🔑');
+      debugPrint('🔑 $token');
+      debugPrint('🔑 ============================================= 🔑');
+      return token;
+    } catch (e) {
+      debugPrint('⚠️ Error getting FCM token: $e');
+      return null;
+    }
+  }
+
   @override
   Future<({String token, StudentModel student})> loginStudent({
     required String nationalId,
     required String password,
+    String? fcmToken,
   }) async {
     try {
+      final token = fcmToken ?? await _getFcmToken();
       final response = await _dio.post(
         ApiEndpoints.studentLogin,
-        data: {'national_id': nationalId, 'password': password},
+        data: {
+          'national_id': nationalId,
+          'password': password,
+          if (token != null && token.isNotEmpty) 'fcm_token': token,
+        },
       );
       final data = _unwrap(response.data);
       return (
@@ -42,18 +65,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on DioException catch (e) {
       _handleDioError(e);
     }
-    throw ServerException('خطأ غير متوقع');
   }
 
   @override
   Future<({String token, TeacherModel teacher})> loginTeacher({
     required String nationalId,
     required String password,
+    String? fcmToken,
   }) async {
     try {
+      final token = fcmToken ?? await _getFcmToken();
       final response = await _dio.post(
         ApiEndpoints.teacherLogin,
-        data: {'national_id': nationalId, 'password': password},
+        data: {
+          'national_id': nationalId,
+          'password': password,
+          if (token != null && token.isNotEmpty) 'fcm_token': token,
+        },
       );
       final data = _unwrap(response.data);
       return (
@@ -63,7 +91,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on DioException catch (e) {
       _handleDioError(e);
     }
-    throw ServerException('خطأ غير متوقع');
   }
 
   @override
@@ -78,7 +105,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on DioException catch (e) {
       _handleDioError(e);
     }
-    throw ServerException('خطأ غير متوقع');
   }
 
   @override

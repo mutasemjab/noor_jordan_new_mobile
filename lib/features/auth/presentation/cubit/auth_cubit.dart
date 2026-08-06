@@ -22,9 +22,14 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> loginAsStudent({
     required String nationalId,
     required String password,
+    String? fcmToken,
   }) async {
     emit(const AuthLoading());
-    final result = await _loginStudent(nationalId: nationalId, password: password);
+    final result = await _loginStudent(
+      nationalId: nationalId,
+      password: password,
+      fcmToken: fcmToken,
+    );
     result.fold(
       (failure) => _handleFailure(failure),
       (data) => emit(StudentAuthenticated(data.student)),
@@ -34,9 +39,14 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> loginAsTeacher({
     required String nationalId,
     required String password,
+    String? fcmToken,
   }) async {
     emit(const AuthLoading());
-    final result = await _loginTeacher(nationalId: nationalId, password: password);
+    final result = await _loginTeacher(
+      nationalId: nationalId,
+      password: password,
+      fcmToken: fcmToken,
+    );
     result.fold(
       (failure) => _handleFailure(failure),
       (data) => emit(TeacherAuthenticated(data.teacher)),

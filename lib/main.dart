@@ -17,13 +17,12 @@ import 'core/theme/app_theme.dart';
 final FlutterLocalNotificationsPlugin localNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-/// Android channel id + iOS sound filename for the custom school-bell
+/// Android channel id + iOS sound filename for the custom
 /// notification sound. Android channel sound is immutable once created on a
-/// device, so this uses a fresh id rather than reusing the old default
-/// channel (which is already cached with the system default sound on
-/// existing installs).
-const _bellChannelId = 'noor_bell_channel';
-const _iosSoundFile = 'school_bell.caf';
+/// device, so this uses a fresh id (`noor_custom_sound_channel`) to ensure
+/// the new sound takes effect on all existing installs.
+const _bellChannelId = 'noor_custom_sound_channel';
+const _iosSoundFile = 'custom_sound.caf';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -93,7 +92,7 @@ Future<void> _initLocalNotifications() async {
     'مدارس نور الأردن',
     description: 'إشعارات المدرسة',
     importance: Importance.high,
-    sound: RawResourceAndroidNotificationSound('school_bell'),
+    sound: RawResourceAndroidNotificationSound('custom_sound'),
   );
   await localNotificationsPlugin
       .resolvePlatformSpecificImplementation<
@@ -118,7 +117,7 @@ void _listenForegroundMessages() {
           importance: Importance.high,
           priority: Priority.high,
           color: AppColors.primary,
-          sound: const RawResourceAndroidNotificationSound('school_bell'),
+          sound: const RawResourceAndroidNotificationSound('custom_sound'),
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,

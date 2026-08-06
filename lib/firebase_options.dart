@@ -29,18 +29,18 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAJHJHlfpOBZrmrjnyJ4HXXeEeHt5yjvw0',
-    appId: '1:998389060248:android:be3243e958710228c676ed',
-    messagingSenderId: '998389060248',
-    projectId: 'noor-9754e',
-    storageBucket: 'noor-9754e.firebasestorage.app',
+    apiKey: 'AIzaSyCql84rEXmGSqQnWvoZh8TmXZcvq77y-Ns',
+    appId: '1:131350284305:android:1ab7d2d76577ad871c09b0',
+    messagingSenderId: '131350284305',
+    projectId: 'noor-school-55240',
+    storageBucket: 'noor-school-55240.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCaERBcBlTr3gg0BhT0LHiFqjUN1heiZPw',
-    appId: '1:998389060248:ios:d41a33a164400408c676ed',
-    messagingSenderId: '998389060248',
-    projectId: 'noor-9754e',
-    storageBucket: 'noor-9754e.firebasestorage.app',
+    apiKey: 'AIzaSyBaEt7mmZuhfZdNO9M3210cgm5mS7sXvhY',
+    appId: '1:131350284305:ios:2ae79a61eafe41471c09b0',
+    messagingSenderId: '131350284305',
+    projectId: 'noor-school-55240',
+    storageBucket: 'noor-school-55240.firebasestorage.app',
     iosBundleId: 'com.school.noor',
   );
 }

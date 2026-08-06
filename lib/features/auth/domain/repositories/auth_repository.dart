@@ -8,11 +8,13 @@ abstract class AuthRepository {
   Future<Either<Failure, ({String token, Student student})>> loginStudent({
     required String nationalId,
     required String password,
+    String? fcmToken,
   });
 
   Future<Either<Failure, ({String token, Teacher teacher})>> loginTeacher({
     required String nationalId,
     required String password,
+    String? fcmToken,
   });
 
   Future<Either<Failure, ({String token, Student student})>> switchSibling(

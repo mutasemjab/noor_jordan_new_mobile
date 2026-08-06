@@ -10,7 +10,12 @@ class LoginTeacherUseCase {
   Future<Either<Failure, ({String token, Teacher teacher})>> call({
     required String nationalId,
     required String password,
+    String? fcmToken,
   }) {
-    return _repo.loginTeacher(nationalId: nationalId, password: password);
+    return _repo.loginTeacher(
+      nationalId: nationalId,
+      password: password,
+      fcmToken: fcmToken,
+    );
   }
 }
