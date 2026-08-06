@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/student_model.dart';
@@ -31,12 +30,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<String?> _getFcmToken() async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
-      debugPrint('🔑 ================= FCM TOKEN ================= 🔑');
-      debugPrint('🔑 $token');
-      debugPrint('🔑 ============================================= 🔑');
+      // print('🔑 ================= FCM TOKEN ================= 🔑');
+      // print('🔑 $token');
+      // print('🔑 ============================================= 🔑');
       return token;
     } catch (e) {
-      debugPrint('⚠️ Error getting FCM token: $e');
+      //  print('⚠️ Error getting FCM token: $e');
       return null;
     }
   }
@@ -94,9 +93,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<({String token, StudentModel student})> switchSibling(int siblingId) async {
+  Future<({String token, StudentModel student})> switchSibling(
+      int siblingId) async {
     try {
-      final response = await _dio.post(ApiEndpoints.studentSwitchSibling(siblingId));
+      final response =
+          await _dio.post(ApiEndpoints.studentSwitchSibling(siblingId));
       final data = _unwrap(response.data);
       return (
         token: data['token'] as String,

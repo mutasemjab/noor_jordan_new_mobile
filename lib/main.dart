@@ -51,6 +51,7 @@ Future<void> main() async {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    await _requestNotificationPermissions();
     await _initLocalNotifications();
     _listenForegroundMessages();
     _listenNotificationTaps();
@@ -61,6 +62,28 @@ Future<void> main() async {
   await setupLocator();
 
   runApp(const NoorApp());
+}
+
+Future<void> _requestNotificationPermissions() async {
+  try {
+    final settings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    debugPrint('🔔 Notification Permission Status: ${settings.authorizationStatus}');
+
+    await localNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  } catch (e) {
+    debugPrint('⚠️ Error requesting notification permissions: $e');
+  }
 }
 
 Future<void> _initLocalNotifications() async {
