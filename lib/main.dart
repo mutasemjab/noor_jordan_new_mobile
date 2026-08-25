@@ -87,7 +87,7 @@ Future<void> _requestNotificationPermissions() async {
 }
 
 Future<void> _initLocalNotifications() async {
-  const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
   const iosInit = DarwinInitializationSettings(
     requestAlertPermission: true,
     requestBadgePermission: true,
