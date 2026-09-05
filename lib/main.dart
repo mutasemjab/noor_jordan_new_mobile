@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:noor/firebase_options.dart';
 
+import 'core/auth/auth_session_manager.dart';
 import 'core/constants/app_colors.dart';
 import 'core/di/injection.dart';
 import 'core/router/app_router.dart';
@@ -75,7 +77,8 @@ Future<void> _requestNotificationPermissions() async {
       provisional: false,
       sound: true,
     );
-    debugPrint('🔔 Notification Permission Status: ${settings.authorizationStatus}');
+    debugPrint(
+        '🔔 Notification Permission Status: ${settings.authorizationStatus}');
 
     await localNotificationsPlugin
         .resolvePlatformSpecificImplementation<
@@ -184,8 +187,31 @@ void _routePushTap(Map<String, dynamic> data) {
   }
 }
 
-class NoorApp extends StatelessWidget {
+class NoorApp extends StatefulWidget {
   const NoorApp({super.key});
+
+  @override
+  State<NoorApp> createState() => _NoorAppState();
+}
+
+class _NoorAppState extends State<NoorApp> {
+  late final StreamSubscription<String> _sessionExpiredSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _sessionExpiredSubscription =
+        sl<AuthSessionManager>().sessionExpired.listen((loginRoute) {
+      if (!mounted) return;
+      appRouter.go(loginRoute);
+    });
+  }
+
+  @override
+  void dispose() {
+    _sessionExpiredSubscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

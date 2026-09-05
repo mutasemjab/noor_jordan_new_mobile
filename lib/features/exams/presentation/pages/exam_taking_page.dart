@@ -83,8 +83,9 @@ class ExamTakingPage extends StatelessWidget {
                       itemBuilder: (_, i) {
                         final isAnswered = state.answers.containsKey(questions[i].id);
                         final isCurrent = i == state.currentIndex;
+                        final canNavigate = context.read<ExamsCubit>().canGoToQuestion(i);
                         return GestureDetector(
-                          onTap: () => context.read<ExamsCubit>().goToQuestion(i),
+                          onTap: canNavigate ? () => context.read<ExamsCubit>().goToQuestion(i) : null,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -216,7 +217,9 @@ class ExamTakingPage extends StatelessWidget {
                                     style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700)),
                               )
                             : ElevatedButton(
-                                onPressed: () => context.read<ExamsCubit>().nextQuestion(),
+                                onPressed: selectedOption == null
+                                    ? null
+                                    : () => context.read<ExamsCubit>().nextQuestion(),
                                 style: ElevatedButton.styleFrom(
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                                 child: const Text('التالي',

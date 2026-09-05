@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_client.dart';
+import '../auth/auth_session_manager.dart';
 import '../network/network_info.dart';
 import '../storage/local_storage.dart';
 
@@ -213,8 +214,11 @@ Future<void> setupLocator() async {
   }
 
   // Core
-  sl.registerSingleton<LocalStorage>(LocalStorage(sl(), sl()));
-  sl.registerSingleton<Dio>(ApiClient.getInstance(sl()));
+  final localStorage = LocalStorage(sl(), sl());
+  await localStorage.initializeForLaunch();
+  sl.registerSingleton<LocalStorage>(localStorage);
+  sl.registerSingleton<AuthSessionManager>(AuthSessionManager(sl()));
+  sl.registerSingleton<Dio>(ApiClient.getInstance(sl(), sl()));
   sl.registerSingleton<NetworkInfo>(NetworkInfoImpl(sl()));
 
   // Auth

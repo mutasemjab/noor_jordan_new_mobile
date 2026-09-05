@@ -1,7 +1,9 @@
 name: noor
 description: "مدارس نور الأردن الدولية - Noor Jordan International Schools"
 publish_to: "none"
-version: 8.0.0+201
+version: 8.0.5+207
+
+
 
 environment:
   sdk: ">=3.2.3 <4.0.0"

@@ -1,12 +1,14 @@
 import 'package:dio/dio.dart';
 import '../api/api_logger.dart';
+import '../auth/auth_session_manager.dart';
 import '../storage/local_storage.dart';
-import '../constants/app_constants.dart';
+import 'api_endpoints.dart';
 
 class ApiInterceptor extends InterceptorsWrapper {
   final LocalStorage _localStorage;
+  final AuthSessionManager _authSessionManager;
 
-  ApiInterceptor(this._localStorage);
+  ApiInterceptor(this._localStorage, this._authSessionManager);
 
   @override
   Future<void> onRequest(
@@ -30,7 +32,10 @@ class ApiInterceptor extends InterceptorsWrapper {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     ApiLogger.logError(err);
 
     String arabicMessage;
@@ -46,6 +51,10 @@ class ApiInterceptor extends InterceptorsWrapper {
       case DioExceptionType.badResponse:
         final statusCode = err.response?.statusCode;
         if (statusCode == 401) {
+          final rejectedToken = _bearerToken(err.requestOptions);
+          if (rejectedToken != null && !_isLoginRequest(err.requestOptions)) {
+            await _authSessionManager.handleUnauthorized(rejectedToken);
+          }
           arabicMessage = 'انتهت جلسة تسجيل الدخول، يرجى تسجيل الدخول مجدداً';
         } else if (statusCode == 403) {
           arabicMessage = 'غير مصرح بالوصول';
@@ -71,5 +80,21 @@ class ApiInterceptor extends InterceptorsWrapper {
       message: arabicMessage,
     );
     handler.next(customError);
+  }
+
+  String? _bearerToken(RequestOptions options) {
+    final authorization = options.headers['Authorization']?.toString();
+    const prefix = 'Bearer ';
+    if (authorization == null || !authorization.startsWith(prefix)) {
+      return null;
+    }
+
+    final token = authorization.substring(prefix.length).trim();
+    return token.isEmpty ? null : token;
+  }
+
+  bool _isLoginRequest(RequestOptions options) {
+    return options.path == ApiEndpoints.studentLogin ||
+        options.path == ApiEndpoints.teacherLogin;
   }
 }

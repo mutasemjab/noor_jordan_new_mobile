@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/pdf_viewer_page.dart';
@@ -28,11 +29,21 @@ class ContractPage extends StatelessWidget {
         ),
         body: BlocBuilder<ContractCubit, ContractState>(
           builder: (context, state) {
-            if (state is ContractLoading) return const ShimmerList(itemCount: 4);
+            if (state is ContractLoading) {
+              return const ShimmerList(itemCount: 4);
+            }
             if (state is ContractError) {
               return AppErrorWidget(message: state.message, onRetry: () => context.read<ContractCubit>().load());
             }
-            if (state is ContractLoaded) return _ContractBody(contract: state.contract);
+            if (state is ContractEmpty) {
+              return const EmptyStateWidget(
+                message: 'لم يتم رفع عقدك بعد',
+                icon: Icons.description_outlined,
+              );
+            }
+            if (state is ContractLoaded) {
+              return _ContractBody(contract: state.contract);
+            }
             return const ShimmerList();
           },
         ),
