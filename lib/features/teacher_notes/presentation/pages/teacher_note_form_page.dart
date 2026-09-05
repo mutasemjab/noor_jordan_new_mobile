@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../chat/presentation/widgets/attachment_sheet.dart';
 import '../../../educational_notes/domain/entities/educational_note.dart';
+import '../../../teacher_common/domain/entities/teacher_subject.dart';
+import '../../../teacher_common/presentation/widgets/subject_picker_field.dart';
 import '../cubit/teacher_notes_cubit.dart';
 
 class TeacherNoteFormPage extends StatefulWidget {
@@ -24,6 +26,7 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
   late final TextEditingController _descCtrl;
   late EducationalNoteType _type;
   late DateTime _date;
+  TeacherSubject? _subject;
   File? _newAttachment;
   bool _saving = false;
 
@@ -37,6 +40,9 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
     _descCtrl = TextEditingController(text: note?.description ?? '');
     _type = note?.type ?? EducationalNoteType.lesson;
     _date = note?.date ?? DateTime.now();
+    if (note?.subjectId != null && note?.subjectName != null) {
+      _subject = TeacherSubject(id: note!.subjectId!, name: note.subjectName!);
+    }
   }
 
   @override
@@ -68,12 +74,19 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
       );
       return;
     }
+    if (_subject == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('اختر المادة أولاً', style: TextStyle(fontFamily: 'Cairo')), backgroundColor: AppColors.error),
+      );
+      return;
+    }
     setState(() => _saving = true);
     final cubit = context.read<TeacherNotesCubit>();
     final String? error;
     if (_isEditing) {
       error = await cubit.update(
         noteId: widget.existingNote!.id,
+        subjectId: _subject!.id,
         title: _titleCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         type: _type,
@@ -82,6 +95,7 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
       );
     } else {
       error = await cubit.create(
+        subjectId: _subject!.id,
         title: _titleCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         type: _type,
@@ -113,6 +127,12 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          SubjectPickerField(
+            classId: widget.classId,
+            selectedSubjectId: _subject?.id,
+            onChanged: (s) => setState(() => _subject = s),
+          ),
+          const SizedBox(height: 16),
           // Type selector
           Row(
             children: [

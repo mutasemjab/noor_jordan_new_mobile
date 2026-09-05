@@ -11,10 +11,13 @@ class NoteModel extends EducationalNote {
     required super.teacherName,
     super.teacherAvatar,
     required super.className,
+    super.subjectId,
+    super.subjectName,
   });
 
   factory NoteModel.fromJson(Map<String, dynamic> json) {
     final teacher = json['teacher'] as Map<String, dynamic>? ?? {};
+    final subject = json['subject'] as Map<String, dynamic>?;
     return NoteModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: json['title'] as String? ?? '',
@@ -27,6 +30,8 @@ class NoteModel extends EducationalNote {
       teacherName: teacher['name'] as String? ?? '',
       teacherAvatar: teacher['avatar'] as String?,
       className: json['class'] as String? ?? '',
+      subjectId: (subject?['id'] as num?)?.toInt(),
+      subjectName: subject?['name'] as String?,
     );
   }
 }

@@ -11,6 +11,7 @@ abstract class TeacherNotesRemoteDataSource {
 
   Future<void> createNote({
     required int classId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -20,6 +21,7 @@ abstract class TeacherNotesRemoteDataSource {
 
   Future<void> updateNote({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -52,6 +54,7 @@ class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
   @override
   Future<void> createNote({
     required int classId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -61,6 +64,7 @@ class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
     try {
       final formData = FormData.fromMap({
         'class_id': classId,
+        'subject_id': subjectId,
         'title': title,
         'description': description,
         'type': type.name,
@@ -80,6 +84,7 @@ class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
   @override
   Future<void> updateNote({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -89,6 +94,7 @@ class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
     try {
       final formData = FormData.fromMap({
         '_method': 'PUT',
+        'subject_id': subjectId,
         'title': title,
         'description': description,
         'type': type.name,

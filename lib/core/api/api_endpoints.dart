@@ -26,6 +26,9 @@ class ApiEndpoints {
   static String studentAttemptResult(int attemptId) => '/v1/student/attempts/$attemptId';
   static const String studentContract = '/v1/student/contract';
   static const String studentEducationalNotes = '/v1/student/educational-notes';
+  static const String studentNoteDates = '/v1/student/educational-notes/dates';
+  static const String studentNoteSubjects = '/v1/student/educational-notes/subjects';
+  static const String studentNoteContent = '/v1/student/educational-notes/content';
   static const String studentAnnouncements = '/v1/student/announcements';
   static String studentAnnouncementDetail(int id) => '/v1/student/announcements/$id';
   static const String studentNotifications = '/v1/student/notifications';

@@ -107,7 +107,9 @@ import '../../features/contract/presentation/cubit/contract_cubit.dart';
 import '../../features/educational_notes/data/datasources/notes_remote_datasource.dart';
 import '../../features/educational_notes/data/repositories/notes_repository_impl.dart';
 import '../../features/educational_notes/domain/repositories/notes_repository.dart';
-import '../../features/educational_notes/domain/usecases/get_notes_usecase.dart';
+import '../../features/educational_notes/domain/usecases/note_browse_usecases.dart';
+import '../../features/educational_notes/presentation/cubit/note_content_cubit.dart';
+import '../../features/educational_notes/presentation/cubit/note_subjects_cubit.dart';
 import '../../features/educational_notes/presentation/cubit/notes_cubit.dart';
 
 import '../../features/files/data/datasources/files_remote_datasource.dart';
@@ -334,8 +336,16 @@ Future<void> setupLocator() async {
   // Educational Notes
   sl.registerLazySingleton<NotesRemoteDataSource>(() => NotesRemoteDataSourceImpl(sl()));
   sl.registerLazySingleton<NotesRepository>(() => NotesRepositoryImpl(sl(), sl()));
-  sl.registerLazySingleton(() => GetNotesUseCase(sl()));
-  sl.registerFactory(() => NotesCubit(sl()));
+  sl.registerLazySingleton(() => GetNoteDatesUseCase(sl()));
+  sl.registerLazySingleton(() => GetNoteSubjectsUseCase(sl()));
+  sl.registerLazySingleton(() => GetNoteContentUseCase(sl()));
+  sl.registerFactory(() => NoteDatesCubit(sl()));
+  sl.registerFactoryParam<NoteSubjectsCubit, String, void>(
+    (date, _) => NoteSubjectsCubit(date: date, useCase: sl()),
+  );
+  sl.registerFactoryParam<NoteContentCubit, String, int>(
+    (date, subjectId) => NoteContentCubit(date: date, subjectId: subjectId, useCase: sl()),
+  );
 
   // Files
   sl.registerLazySingleton<FilesRemoteDataSource>(() => FilesRemoteDataSourceImpl(sl()));

@@ -9,6 +9,7 @@ abstract class TeacherNotesRepository {
 
   Future<Either<Failure, void>> createNote({
     required int classId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -18,6 +19,7 @@ abstract class TeacherNotesRepository {
 
   Future<Either<Failure, void>> updateNote({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,

@@ -31,6 +31,7 @@ class TeacherNotesRepositoryImpl implements TeacherNotesRepository {
   @override
   Future<Either<Failure, void>> createNote({
     required int classId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -41,6 +42,7 @@ class TeacherNotesRepositoryImpl implements TeacherNotesRepository {
     try {
       await _remote.createNote(
         classId: classId,
+        subjectId: subjectId,
         title: title,
         description: description,
         type: type,
@@ -60,6 +62,7 @@ class TeacherNotesRepositoryImpl implements TeacherNotesRepository {
   @override
   Future<Either<Failure, void>> updateNote({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -70,6 +73,7 @@ class TeacherNotesRepositoryImpl implements TeacherNotesRepository {
     try {
       await _remote.updateNote(
         noteId: noteId,
+        subjectId: subjectId,
         title: title,
         description: description,
         type: type,

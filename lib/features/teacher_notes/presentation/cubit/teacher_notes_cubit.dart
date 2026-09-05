@@ -36,6 +36,7 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
 
   /// Returns an error message on failure, or null on success.
   Future<String?> create({
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -44,6 +45,7 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
   }) async {
     final result = await _createNote(
       classId: classId,
+      subjectId: subjectId,
       title: title,
       description: description,
       type: type,
@@ -58,6 +60,7 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
 
   Future<String?> update({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -66,6 +69,7 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
   }) async {
     final result = await _updateNote(
       noteId: noteId,
+      subjectId: subjectId,
       title: title,
       description: description,
       type: type,

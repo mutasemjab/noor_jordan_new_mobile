@@ -16,6 +16,7 @@ class CreateNoteUseCase {
   CreateNoteUseCase(this._repository);
   Future<Either<Failure, void>> call({
     required int classId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -24,6 +25,7 @@ class CreateNoteUseCase {
   }) =>
       _repository.createNote(
         classId: classId,
+        subjectId: subjectId,
         title: title,
         description: description,
         type: type,
@@ -37,6 +39,7 @@ class UpdateNoteUseCase {
   UpdateNoteUseCase(this._repository);
   Future<Either<Failure, void>> call({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
@@ -45,6 +48,7 @@ class UpdateNoteUseCase {
   }) =>
       _repository.updateNote(
         noteId: noteId,
+        subjectId: subjectId,
         title: title,
         description: description,
         type: type,

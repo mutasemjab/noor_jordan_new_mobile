@@ -13,14 +13,53 @@ class NotesRepositoryImpl implements NotesRepository {
   NotesRepositoryImpl(this._remote, this._network);
 
   @override
-  Future<Either<Failure, List<EducationalNote>>> getNotes() async {
+  Future<Either<Failure, List<NoteDateSummary>>> getDates() async {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
-      return Right(await _remote.getNotes());
+      return Right(await _remote.getDates());
     } on NetworkException {
       return const Left(NetworkFailure());
+    } on UnauthorizedException {
+      return const Left(UnauthorizedFailure());
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<NoteSubject>>> getSubjects(String date) async {
+    if (!await _network.isConnected) return const Left(NetworkFailure());
+    try {
+      return Right(await _remote.getSubjects(date));
+    } on NetworkException {
+      return const Left(NetworkFailure());
+    } on UnauthorizedException {
+      return const Left(UnauthorizedFailure());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<NoteContentItem>>> getContent({
+    required String date,
+    required int subjectId,
+  }) async {
+    if (!await _network.isConnected) return const Left(NetworkFailure());
+    try {
+      return Right(await _remote.getContent(date: date, subjectId: subjectId));
+    } on NetworkException {
+      return const Left(NetworkFailure());
+    } on UnauthorizedException {
+      return const Left(UnauthorizedFailure());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
     }
   }
 }
