@@ -50,22 +50,23 @@ class ApiInterceptor extends InterceptorsWrapper {
         break;
       case DioExceptionType.badResponse:
         final statusCode = err.response?.statusCode;
+        final backendMessage = _backendMessage(err.response?.data);
         if (statusCode == 401) {
           final rejectedToken = _bearerToken(err.requestOptions);
           if (rejectedToken != null && !_isLoginRequest(err.requestOptions)) {
             await _authSessionManager.handleUnauthorized(rejectedToken);
           }
-          arabicMessage = 'انتهت جلسة تسجيل الدخول، يرجى تسجيل الدخول مجدداً';
+          arabicMessage = backendMessage ?? 'انتهت جلسة تسجيل الدخول، يرجى تسجيل الدخول مجدداً';
         } else if (statusCode == 403) {
-          arabicMessage = 'غير مصرح بالوصول';
+          arabicMessage = backendMessage ?? 'غير مصرح بالوصول';
         } else if (statusCode == 404) {
-          arabicMessage = 'البيانات غير موجودة';
+          arabicMessage = backendMessage ?? 'البيانات غير موجودة';
         } else if (statusCode == 422) {
-          arabicMessage = 'يرجى التحقق من البيانات المدخلة';
+          arabicMessage = backendMessage ?? 'يرجى التحقق من البيانات المدخلة';
         } else if (statusCode != null && statusCode >= 500) {
-          arabicMessage = 'خطأ في الخادم، حاول لاحقاً';
+          arabicMessage = backendMessage ?? 'خطأ في الخادم، حاول لاحقاً';
         } else {
-          arabicMessage = 'حدث خطأ، حاول مرة أخرى';
+          arabicMessage = backendMessage ?? 'حدث خطأ، حاول مرة أخرى';
         }
         break;
       default:
@@ -80,6 +81,15 @@ class ApiInterceptor extends InterceptorsWrapper {
       message: arabicMessage,
     );
     handler.next(customError);
+  }
+
+  String? _backendMessage(dynamic responseData) {
+    if (responseData is! Map) return null;
+    final message = responseData['message'];
+    if (message is String && message.trim().isNotEmpty) {
+      return message;
+    }
+    return null;
   }
 
   String? _bearerToken(RequestOptions options) {
