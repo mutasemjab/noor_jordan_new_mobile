@@ -107,6 +107,51 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+class _ImageGallery extends StatelessWidget {
+  final List<NoteImage> images;
+  final String title;
+  const _ImageGallery({required this.images, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 90,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: images.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final image = images[i];
+          return GestureDetector(
+            onTap: () => FullscreenImageViewer.open(context, image.url, title: title),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: CachedNetworkImage(
+                imageUrl: image.url,
+                width: 90,
+                height: 90,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(
+                  width: 90,
+                  height: 90,
+                  color: AppColors.divider,
+                  child: const Center(child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2)),
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  width: 90,
+                  height: 90,
+                  color: AppColors.divider,
+                  child: const Icon(Icons.image_not_supported_outlined, color: AppColors.textSecondary),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _NoteCard extends StatelessWidget {
   final NoteContentItem note;
   final Color color;
@@ -149,6 +194,10 @@ class _NoteCard extends StatelessWidget {
                     note.description,
                     style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.textSecondary, height: 1.7),
                   ),
+                ],
+                if (note.images.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _ImageGallery(images: note.images, title: note.title),
                 ],
                 if (hasAttachment) ...[
                   const SizedBox(height: 12),

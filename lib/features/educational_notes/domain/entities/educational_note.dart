@@ -2,6 +2,18 @@ import 'package:equatable/equatable.dart';
 
 enum EducationalNoteType { lesson, homework }
 
+/// One image attached to an educational note's gallery (separate from the
+/// single `attachment` field).
+class NoteImage extends Equatable {
+  final int id;
+  final String url;
+
+  const NoteImage({required this.id, required this.url});
+
+  @override
+  List<Object?> get props => [id, url];
+}
+
 /// Used by the teacher's مفكرتي create/edit/delete flow (teacher_notes
 /// feature) — keep this shape stable, it's shared across features.
 class EducationalNote extends Equatable {
@@ -11,6 +23,7 @@ class EducationalNote extends Equatable {
   final EducationalNoteType type;
   final DateTime date;
   final String? attachment;
+  final List<NoteImage> images;
   final String teacherName;
   final String? teacherAvatar;
   final String className;
@@ -24,6 +37,7 @@ class EducationalNote extends Equatable {
     required this.type,
     required this.date,
     this.attachment,
+    this.images = const [],
     required this.teacherName,
     this.teacherAvatar,
     required this.className,
@@ -39,6 +53,7 @@ class EducationalNote extends Equatable {
         type,
         date,
         attachment,
+        images,
         teacherName,
         teacherAvatar,
         className,
@@ -93,6 +108,7 @@ class NoteContentItem extends Equatable {
   final EducationalNoteType type;
   final DateTime date;
   final String? attachment;
+  final List<NoteImage> images;
   final String teacherName;
   final String? teacherAvatar;
   final String className;
@@ -105,6 +121,7 @@ class NoteContentItem extends Equatable {
     required this.type,
     required this.date,
     this.attachment,
+    this.images = const [],
     required this.teacherName,
     this.teacherAvatar,
     required this.className,
@@ -119,6 +136,7 @@ class NoteContentItem extends Equatable {
         type,
         date,
         attachment,
+        images,
         teacherName,
         teacherAvatar,
         className,

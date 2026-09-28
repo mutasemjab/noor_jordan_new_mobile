@@ -203,6 +203,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                               _MenuItem(icon: Icons.receipt_long_outlined, label: 'عقدي المالي', color: AppColors.accent, onTap: () => context.push('/contract')),
                               _MenuItem(icon: Icons.quiz_outlined, label: 'الاختبارات', color: AppColors.primary, onTap: () => context.push('/exams')),
                               _MenuItem(icon: Icons.folder_outlined, label: 'الملفات', color: AppColors.primary, onTap: () => context.push('/files')),
+                              _MenuItem(icon: Icons.link_rounded, label: 'الروابط الخارجية', color: AppColors.primary, onTap: () => context.push('/external-links')),
                               _MenuItem(icon: Icons.calendar_today_outlined, label: 'جدول الحصص', color: AppColors.primary, onTap: () => context.push('/schedule')),
                               _MenuItem(icon: Icons.event_note_outlined, label: 'جداول الامتحانات', color: AppColors.primary, onTap: () => context.push('/exam-schedules')),
                               _MenuItem(icon: Icons.campaign_outlined, label: 'الإعلانات', color: AppColors.primary, onTap: () => context.go('/announcements')),

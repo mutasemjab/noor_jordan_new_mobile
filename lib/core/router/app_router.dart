@@ -27,6 +27,7 @@ import '../../features/announcements/presentation/pages/announcements_page.dart'
 import '../../features/announcements/presentation/pages/announcement_detail_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/files/presentation/pages/files_page.dart';
+import '../../features/external_links/presentation/pages/external_links_page.dart';
 import '../../features/educational_notes/presentation/pages/educational_notes_page.dart';
 import '../../features/exam_schedules/presentation/pages/exam_schedules_page.dart';
 import '../../features/chat/presentation/pages/conversations_list_page.dart';
@@ -173,6 +174,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/files',
       pageBuilder: (_, state) => _slidePage(state, const FilesPage()),
+    ),
+    GoRoute(
+      path: '/external-links',
+      pageBuilder: (_, state) => _slidePage(state, const ExternalLinksPage()),
     ),
     GoRoute(
       path: '/exam-schedules',

@@ -118,6 +118,18 @@ import '../../features/files/domain/repositories/files_repository.dart';
 import '../../features/files/domain/usecases/get_files_usecase.dart';
 import '../../features/files/presentation/cubit/files_cubit.dart';
 
+import '../../features/external_links/data/datasources/external_links_remote_datasource.dart';
+import '../../features/external_links/data/repositories/external_links_repository_impl.dart';
+import '../../features/external_links/domain/repositories/external_links_repository.dart';
+import '../../features/external_links/domain/usecases/get_external_links_usecase.dart';
+import '../../features/external_links/presentation/cubit/external_links_cubit.dart';
+
+import '../../features/teacher_external_links/data/datasources/teacher_external_links_remote_datasource.dart';
+import '../../features/teacher_external_links/data/repositories/teacher_external_links_repository_impl.dart';
+import '../../features/teacher_external_links/domain/repositories/teacher_external_links_repository.dart';
+import '../../features/teacher_external_links/domain/usecases/teacher_external_links_usecases.dart';
+import '../../features/teacher_external_links/presentation/cubit/teacher_external_links_cubit.dart';
+
 import '../../features/teacher_home/data/datasources/teacher_home_remote_datasource.dart';
 import '../../features/teacher_home/data/repositories/teacher_home_repository_impl.dart';
 import '../../features/teacher_home/domain/repositories/teacher_home_repository.dart';
@@ -353,6 +365,29 @@ Future<void> setupLocator() async {
   sl.registerLazySingleton(() => GetFilesUseCase(sl()));
   sl.registerFactory(() => FilesCubit(sl()));
 
+  // External Links
+  sl.registerLazySingleton<ExternalLinksRemoteDataSource>(() => ExternalLinksRemoteDataSourceImpl(sl()));
+  sl.registerLazySingleton<ExternalLinksRepository>(() => ExternalLinksRepositoryImpl(sl(), sl()));
+  sl.registerLazySingleton(() => GetExternalLinksUseCase(sl()));
+  sl.registerFactory(() => ExternalLinksCubit(sl()));
+
+  // Teacher External Links
+  sl.registerLazySingleton<TeacherExternalLinksRemoteDataSource>(() => TeacherExternalLinksRemoteDataSourceImpl(sl()));
+  sl.registerLazySingleton<TeacherExternalLinksRepository>(() => TeacherExternalLinksRepositoryImpl(sl(), sl()));
+  sl.registerLazySingleton(() => GetTeacherExternalLinksUseCase(sl()));
+  sl.registerLazySingleton(() => CreateExternalLinkUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateExternalLinkUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteExternalLinkUseCase(sl()));
+  sl.registerFactoryParam<TeacherExternalLinksCubit, int, void>(
+    (classId, _) => TeacherExternalLinksCubit(
+      classId: classId,
+      getLinks: sl(),
+      createLink: sl(),
+      updateLink: sl(),
+      deleteLink: sl(),
+    ),
+  );
+
   // Teacher Home
   sl.registerLazySingleton<TeacherHomeRemoteDataSource>(() => TeacherHomeRemoteDataSourceImpl(sl()));
   sl.registerLazySingleton<TeacherHomeRepository>(() => TeacherHomeRepositoryImpl(sl(), sl(), sl()));
@@ -394,6 +429,7 @@ Future<void> setupLocator() async {
   sl.registerLazySingleton(() => CreateNoteUseCase(sl()));
   sl.registerLazySingleton(() => UpdateNoteUseCase(sl()));
   sl.registerLazySingleton(() => DeleteNoteUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteNoteImageUseCase(sl()));
   sl.registerFactoryParam<TeacherNotesCubit, int, void>(
     (classId, _) => TeacherNotesCubit(
       classId: classId,
@@ -401,6 +437,7 @@ Future<void> setupLocator() async {
       createNote: sl(),
       updateNote: sl(),
       deleteNote: sl(),
+      deleteNoteImage: sl(),
     ),
   );
 

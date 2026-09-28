@@ -10,6 +10,7 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
   final CreateNoteUseCase _createNote;
   final UpdateNoteUseCase _updateNote;
   final DeleteNoteUseCase _deleteNote;
+  final DeleteNoteImageUseCase _deleteNoteImage;
 
   final int classId;
 
@@ -19,10 +20,12 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
     required CreateNoteUseCase createNote,
     required UpdateNoteUseCase updateNote,
     required DeleteNoteUseCase deleteNote,
+    required DeleteNoteImageUseCase deleteNoteImage,
   })  : _getClassNotes = getClassNotes,
         _createNote = createNote,
         _updateNote = updateNote,
         _deleteNote = deleteNote,
+        _deleteNoteImage = deleteNoteImage,
         super(const TeacherNotesLoading());
 
   Future<void> load() async {
@@ -42,6 +45,7 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   }) async {
     final result = await _createNote(
       classId: classId,
@@ -51,6 +55,7 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
       type: type,
       date: date,
       attachment: attachment,
+      images: images,
     );
     return result.fold((f) => f.message, (_) {
       load();
@@ -66,6 +71,7 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   }) async {
     final result = await _updateNote(
       noteId: noteId,
@@ -75,6 +81,7 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
       type: type,
       date: date,
       attachment: attachment,
+      images: images,
     );
     return result.fold((f) => f.message, (_) {
       load();
@@ -88,5 +95,13 @@ class TeacherNotesCubit extends Cubit<TeacherNotesState> {
       load();
       return null;
     });
+  }
+
+  /// Deletes one existing image from a note. Unlike create/update, this does
+  /// NOT reload the whole list — the form page removes it from local state
+  /// itself so the rest of the in-progress edit isn't disturbed.
+  Future<String?> deleteImage({required int noteId, required int imageId}) async {
+    final result = await _deleteNoteImage(noteId: noteId, imageId: imageId);
+    return result.fold((f) => f.message, (_) => null);
   }
 }

@@ -22,6 +22,7 @@ class CreateNoteUseCase {
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   }) =>
       _repository.createNote(
         classId: classId,
@@ -31,6 +32,7 @@ class CreateNoteUseCase {
         type: type,
         date: date,
         attachment: attachment,
+        images: images,
       );
 }
 
@@ -45,6 +47,7 @@ class UpdateNoteUseCase {
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   }) =>
       _repository.updateNote(
         noteId: noteId,
@@ -54,6 +57,7 @@ class UpdateNoteUseCase {
         type: type,
         date: date,
         attachment: attachment,
+        images: images,
       );
 }
 
@@ -61,4 +65,11 @@ class DeleteNoteUseCase {
   final TeacherNotesRepository _repository;
   DeleteNoteUseCase(this._repository);
   Future<Either<Failure, void>> call(int noteId) => _repository.deleteNote(noteId);
+}
+
+class DeleteNoteImageUseCase {
+  final TeacherNotesRepository _repository;
+  DeleteNoteImageUseCase(this._repository);
+  Future<Either<Failure, void>> call({required int noteId, required int imageId}) =>
+      _repository.deleteNoteImage(noteId: noteId, imageId: imageId);
 }

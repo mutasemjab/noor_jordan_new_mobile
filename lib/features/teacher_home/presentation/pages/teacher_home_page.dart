@@ -13,6 +13,8 @@ import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/stat_card.dart';
 import '../../../classes/domain/entities/school_class.dart';
+import '../../../chat/presentation/cubit/conversations_cubit.dart';
+import '../../../chat/presentation/cubit/conversations_state.dart';
 import '../../../home/domain/entities/home_data.dart' as home_data show Banner;
 import '../../domain/entities/teacher_home_data.dart';
 import '../cubit/teacher_home_cubit.dart';
@@ -51,10 +53,7 @@ class _TeacherHomeView extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white),
-            onPressed: () => context.push('/teacher-messages'),
-          ),
+          const _MessagesIconButton(),
           IconButton(
             icon: const Icon(Icons.person_outline_rounded, color: Colors.white),
             onPressed: () => context.push('/teacher-profile'),
@@ -76,6 +75,51 @@ class _TeacherHomeView extends StatelessWidget {
             return _HomeContent(data: state.data);
           }
           return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+}
+
+/// Chat icon with a small red dot when the teacher has any unread
+/// conversation. Scoped to its own [ConversationsCubit] instance so it
+/// doesn't disturb [TeacherHomeCubit] or any other provider on this page —
+/// it live-updates via the same Firestore stream the messages list uses.
+class _MessagesIconButton extends StatelessWidget {
+  const _MessagesIconButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<ConversationsCubit>()..load(),
+      child: Builder(
+        builder: (context) {
+          final hasUnread = context.select<ConversationsCubit, bool>(
+            (cubit) => cubit.state is ConversationsLoaded && (cubit.state as ConversationsLoaded).totalUnread > 0,
+          );
+          return IconButton(
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white),
+                if (hasUnread)
+                  Positioned(
+                    top: -1,
+                    right: -1,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primary, width: 1.5),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            onPressed: () => context.push('/teacher-messages'),
+          );
         },
       ),
     );

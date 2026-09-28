@@ -15,6 +15,7 @@ abstract class TeacherNotesRepository {
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   });
 
   Future<Either<Failure, void>> updateNote({
@@ -25,7 +26,10 @@ abstract class TeacherNotesRepository {
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   });
 
   Future<Either<Failure, void>> deleteNote(int noteId);
+
+  Future<Either<Failure, void>> deleteNoteImage({required int noteId, required int imageId});
 }
