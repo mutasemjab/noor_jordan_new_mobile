@@ -9,6 +9,7 @@ import '../../../../core/widgets/multi_image_picker_sheet.dart';
 import '../../../chat/presentation/widgets/attachment_sheet.dart';
 import '../../../educational_notes/domain/entities/educational_note.dart';
 import '../../../teacher_common/domain/entities/teacher_subject.dart';
+import '../../../teacher_common/presentation/widgets/class_day_schedule_banner.dart';
 import '../../../teacher_common/presentation/widgets/subject_picker_field.dart';
 import '../cubit/teacher_notes_cubit.dart';
 
@@ -151,6 +152,7 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          ClassDayScheduleBanner(classId: widget.classId, date: _date),
           SubjectPickerField(
             classId: widget.classId,
             selectedSubjectId: _subject?.id,

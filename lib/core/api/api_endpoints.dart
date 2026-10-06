@@ -56,6 +56,7 @@ class ApiEndpoints {
   static const String teacherClasses = '/v1/teacher/my-classes';
   static String teacherClassStudents(int classId) => '/v1/teacher/classes/$classId/students';
   static String teacherClassSubjects(int classId) => '/v1/teacher/classes/$classId/subjects';
+  static String teacherClassDaySchedule(int classId) => '/v1/teacher/classes/$classId/day-schedule';
 
   // Teacher Attendance
   static const String teacherAttendance = '/v1/teacher/attendance';

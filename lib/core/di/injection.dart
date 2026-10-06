@@ -173,6 +173,7 @@ import '../../features/teacher_common/data/datasources/teacher_common_remote_dat
 import '../../features/teacher_common/data/repositories/teacher_common_repository_impl.dart';
 import '../../features/teacher_common/domain/repositories/teacher_common_repository.dart';
 import '../../features/teacher_common/domain/usecases/get_class_subjects_usecase.dart';
+import '../../features/teacher_common/domain/usecases/get_class_day_schedule_usecase.dart';
 
 import '../../features/teacher_files/data/datasources/teacher_files_remote_datasource.dart';
 import '../../features/teacher_files/data/repositories/teacher_files_repository_impl.dart';
@@ -448,10 +449,11 @@ Future<void> setupLocator() async {
   sl.registerLazySingleton(() => UpdateTeacherProfileUseCase(sl()));
   sl.registerFactory(() => TeacherProfileCubit(sl(), sl()));
 
-  // Teacher Common (class subjects lookup)
+  // Teacher Common (class subjects lookup, day-schedule lookup)
   sl.registerLazySingleton<TeacherCommonRemoteDataSource>(() => TeacherCommonRemoteDataSourceImpl(sl()));
   sl.registerLazySingleton<TeacherCommonRepository>(() => TeacherCommonRepositoryImpl(sl(), sl()));
   sl.registerLazySingleton(() => GetClassSubjectsUseCase(sl()));
+  sl.registerLazySingleton(() => GetClassDayScheduleUseCase(sl()));
 
   // Teacher Files (question banks / previous-year exams / worksheets)
   sl.registerLazySingleton<TeacherFilesRemoteDataSource>(() => TeacherFilesRemoteDataSourceImpl(sl()));

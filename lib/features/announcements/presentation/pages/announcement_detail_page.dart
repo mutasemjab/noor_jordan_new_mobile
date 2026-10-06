@@ -6,6 +6,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/fullscreen_image_viewer.dart';
 import '../../../../core/widgets/loading_widget.dart';
+import '../../../../core/widgets/pdf_viewer_page.dart';
 import '../cubit/announcements_cubit.dart';
 import '../cubit/announcements_state.dart';
 import '../../domain/entities/announcement.dart';
@@ -71,6 +72,33 @@ class AnnouncementDetailPage extends StatelessWidget {
                             height: 220,
                             fit: BoxFit.cover,
                             errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                          ),
+                        ),
+                      )
+                    else if (item.pdfUrl != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                        child: GestureDetector(
+                          onTap: () => PdfViewerPage.open(context, url: item!.pdfUrl!, title: item.title),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.error.withOpacity(0.2)),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.picture_as_pdf_rounded, color: AppColors.error, size: 24),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text('عرض المرفق (PDF)',
+                                      style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                                ),
+                                Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
+                              ],
+                            ),
                           ),
                         ),
                       ),
