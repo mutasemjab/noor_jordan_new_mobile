@@ -9,6 +9,27 @@ class LocalStorage {
 
   LocalStorage(this._secureStorage, this._prefs);
 
+  /// Removes a Keychain token left behind by a previous installation.
+  ///
+  /// iOS intentionally keeps Keychain values after an app is uninstalled,
+  /// while SharedPreferences are removed with the app. The non-secure marker
+  /// lets us distinguish a normal launch/update from a fresh installation.
+  /// Existing installations from before this marker was introduced keep their
+  /// session when their matching user metadata is still present.
+  Future<void> initializeForLaunch() async {
+    if (_prefs.getBool(AppConstants.installationMarkerKey) == true) return;
+
+    final token = await getToken();
+    final hasLocalSessionMetadata = _prefs.containsKey(AppConstants.userKey) ||
+        _prefs.containsKey(AppConstants.userTypeKey);
+
+    if (token != null && token.isNotEmpty && !hasLocalSessionMetadata) {
+      await deleteToken();
+    }
+
+    await _prefs.setBool(AppConstants.installationMarkerKey, true);
+  }
+
   // ── Token ──────────────────────────────────────────────
   Future<void> saveToken(String token) async {
     await _secureStorage.write(key: AppConstants.tokenKey, value: token);
@@ -47,8 +68,7 @@ class LocalStorage {
   // ── Cache ──────────────────────────────────────────────
   Future<void> cacheData(String key, dynamic data) async {
     await _prefs.setString(key, jsonEncode(data));
-    await _prefs.setString(
-        '${key}_${AppConstants.lastUpdateKey}',
+    await _prefs.setString('${key}_${AppConstants.lastUpdateKey}',
         DateTime.now().toIso8601String());
   }
 

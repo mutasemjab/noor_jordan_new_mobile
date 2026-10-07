@@ -7,6 +7,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
+import '../../../../core/widgets/pdf_viewer_page.dart';
 import '../cubit/announcements_cubit.dart';
 import '../cubit/announcements_state.dart';
 
@@ -83,6 +84,30 @@ class AnnouncementsPage extends StatelessWidget {
                                       width: double.infinity,
                                       fit: BoxFit.cover,
                                       errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                                    ),
+                                  )
+                                else if (item.pdfUrl != null)
+                                  GestureDetector(
+                                    onTap: () => PdfViewerPage.open(context, url: item.pdfUrl!, title: item.title),
+                                    child: Container(
+                                      margin: const EdgeInsets.all(14),
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.error.withOpacity(0.06),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: AppColors.error.withOpacity(0.2)),
+                                      ),
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.picture_as_pdf_rounded, color: AppColors.error, size: 24),
+                                          SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text('عرض المرفق (PDF)',
+                                                style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                                          ),
+                                          Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 Padding(

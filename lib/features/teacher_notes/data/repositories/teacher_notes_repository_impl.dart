@@ -31,21 +31,25 @@ class TeacherNotesRepositoryImpl implements TeacherNotesRepository {
   @override
   Future<Either<Failure, void>> createNote({
     required int classId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   }) async {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
       await _remote.createNote(
         classId: classId,
+        subjectId: subjectId,
         title: title,
         description: description,
         type: type,
         date: date,
         attachment: attachment,
+        images: images,
       );
       return const Right(null);
     } on NetworkException {
@@ -60,21 +64,25 @@ class TeacherNotesRepositoryImpl implements TeacherNotesRepository {
   @override
   Future<Either<Failure, void>> updateNote({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   }) async {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
       await _remote.updateNote(
         noteId: noteId,
+        subjectId: subjectId,
         title: title,
         description: description,
         type: type,
         date: date,
         attachment: attachment,
+        images: images,
       );
       return const Right(null);
     } on NetworkException {
@@ -91,6 +99,21 @@ class TeacherNotesRepositoryImpl implements TeacherNotesRepository {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
       await _remote.deleteNote(noteId);
+      return const Right(null);
+    } on NetworkException {
+      return const Left(NetworkFailure());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteNoteImage({required int noteId, required int imageId}) async {
+    if (!await _network.isConnected) return const Left(NetworkFailure());
+    try {
+      await _remote.deleteNoteImage(noteId: noteId, imageId: imageId);
       return const Right(null);
     } on NetworkException {
       return const Left(NetworkFailure());

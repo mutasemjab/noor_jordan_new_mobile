@@ -8,7 +8,10 @@ abstract class ContractState extends Equatable {
 }
 
 class ContractInitial extends ContractState {}
+
 class ContractLoading extends ContractState {}
+
+class ContractEmpty extends ContractState {}
 
 class ContractLoaded extends ContractState {
   final Contract contract;

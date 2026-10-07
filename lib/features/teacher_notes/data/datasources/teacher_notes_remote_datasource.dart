@@ -11,23 +11,29 @@ abstract class TeacherNotesRemoteDataSource {
 
   Future<void> createNote({
     required int classId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   });
 
   Future<void> updateNote({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   });
 
   Future<void> deleteNote(int noteId);
+
+  Future<void> deleteNoteImage({required int noteId, required int imageId});
 }
 
 class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
@@ -49,18 +55,27 @@ class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
     }
   }
 
+  Future<List<MultipartFile>> _imagesToMultipart(List<File> images) {
+    return Future.wait(images.map(
+      (f) => MultipartFile.fromFile(f.path, filename: f.path.split(Platform.pathSeparator).last),
+    ));
+  }
+
   @override
   Future<void> createNote({
     required int classId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   }) async {
     try {
       final formData = FormData.fromMap({
         'class_id': classId,
+        'subject_id': subjectId,
         'title': title,
         'description': description,
         'type': type.name,
@@ -70,6 +85,7 @@ class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
             attachment.path,
             filename: attachment.path.split(Platform.pathSeparator).last,
           ),
+        if (images.isNotEmpty) 'images[]': await _imagesToMultipart(images),
       });
       await _dio.post(ApiEndpoints.teacherCreateNote, data: formData);
     } on DioException catch (e) {
@@ -80,15 +96,18 @@ class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
   @override
   Future<void> updateNote({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   }) async {
     try {
       final formData = FormData.fromMap({
         '_method': 'PUT',
+        'subject_id': subjectId,
         'title': title,
         'description': description,
         'type': type.name,
@@ -98,6 +117,7 @@ class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
             attachment.path,
             filename: attachment.path.split(Platform.pathSeparator).last,
           ),
+        if (images.isNotEmpty) 'images[]': await _imagesToMultipart(images),
       });
       await _dio.post(ApiEndpoints.teacherUpdateNote(noteId), data: formData);
     } on DioException catch (e) {
@@ -109,6 +129,15 @@ class TeacherNotesRemoteDataSourceImpl implements TeacherNotesRemoteDataSource {
   Future<void> deleteNote(int noteId) async {
     try {
       await _dio.delete(ApiEndpoints.teacherDeleteNote(noteId));
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
+  Future<void> deleteNoteImage({required int noteId, required int imageId}) async {
+    try {
+      await _dio.delete(ApiEndpoints.teacherDeleteNoteImage(noteId, imageId));
     } on DioException catch (e) {
       throw _mapError(e);
     }

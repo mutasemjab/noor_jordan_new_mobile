@@ -9,7 +9,7 @@ import '../../../../core/widgets/loading_widget.dart';
 import '../../domain/entities/educational_note.dart';
 import '../cubit/notes_cubit.dart';
 import '../cubit/notes_state.dart';
-import 'note_day_detail_page.dart';
+import 'note_subjects_page.dart';
 
 class EducationalNotesPage extends StatelessWidget {
   const EducationalNotesPage({super.key});
@@ -17,7 +17,7 @@ class EducationalNotesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<NotesCubit>()..load(),
+      create: (_) => sl<NoteDatesCubit>()..load(),
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -30,17 +30,17 @@ class EducationalNotesPage extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
         ),
-        body: BlocBuilder<NotesCubit, NotesState>(
+        body: BlocBuilder<NoteDatesCubit, NoteDatesState>(
           builder: (context, state) {
-            if (state is NotesLoading || state is NotesInitial) {
+            if (state is NoteDatesLoading || state is NoteDatesInitial) {
               return const ShimmerList(itemCount: 6, itemHeight: 84);
             }
-            if (state is NotesError) {
-              return AppErrorWidget(message: state.message, onRetry: () => context.read<NotesCubit>().load());
+            if (state is NoteDatesError) {
+              return AppErrorWidget(message: state.message, onRetry: () => context.read<NoteDatesCubit>().load());
             }
-            if (state is NotesLoaded) {
-              final days = state.days;
-              if (days.isEmpty) {
+            if (state is NoteDatesLoaded) {
+              final dates = state.dates;
+              if (dates.isEmpty) {
                 return const EmptyStateWidget(
                   message: 'لا توجد ملاحظات تعليمية بعد',
                   icon: Icons.menu_book_outlined,
@@ -48,25 +48,23 @@ class EducationalNotesPage extends StatelessWidget {
               }
               return RefreshIndicator(
                 color: AppColors.primary,
-                onRefresh: () => context.read<NotesCubit>().load(),
+                onRefresh: () => context.read<NoteDatesCubit>().load(),
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
                   physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: days.length,
+                  itemCount: dates.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
-                    final day = days[index];
-                    final dayNotes = state.notesForDay(day);
+                    final summary = dates[index];
                     return TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0, end: 1),
                       duration: Duration(milliseconds: 250 + index * 60),
                       builder: (_, v, child) => Opacity(opacity: v, child: child),
-                      child: _DayCard(
-                        day: day,
-                        notes: dayNotes,
+                      child: _DateCard(
+                        summary: summary,
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => NoteDayDetailPage(day: day, notes: dayNotes),
+                            builder: (_) => NoteSubjectsPage(date: summary.date),
                           ),
                         ),
                       ),
@@ -83,23 +81,21 @@ class EducationalNotesPage extends StatelessWidget {
   }
 }
 
-class _DayCard extends StatelessWidget {
-  final DateTime day;
-  final List<EducationalNote> notes;
+class _DateCard extends StatelessWidget {
+  final NoteDateSummary summary;
   final VoidCallback onTap;
 
-  const _DayCard({required this.day, required this.notes, required this.onTap});
+  const _DateCard({required this.summary, required this.onTap});
 
   bool get _isToday {
     final now = DateTime.now();
+    final day = summary.date;
     return day.year == now.year && day.month == now.month && day.day == now.day;
   }
 
   @override
   Widget build(BuildContext context) {
-    final lessonsCount = notes.where((n) => n.type == EducationalNoteType.lesson).length;
-    final homeworkCount = notes.where((n) => n.type == EducationalNoteType.homework).length;
-
+    final day = summary.date;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -189,9 +185,11 @@ class _DayCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        if (lessonsCount > 0) _CountChip(icon: Icons.menu_book_rounded, count: lessonsCount, color: AppColors.excused, label: 'درس'),
-                        if (lessonsCount > 0 && homeworkCount > 0) const SizedBox(width: 8),
-                        if (homeworkCount > 0) _CountChip(icon: Icons.edit_note_rounded, count: homeworkCount, color: AppColors.late, label: 'واجب'),
+                        if (summary.lessonsCount > 0)
+                          _CountChip(icon: Icons.menu_book_rounded, count: summary.lessonsCount, color: AppColors.excused, label: 'درس'),
+                        if (summary.lessonsCount > 0 && summary.homeworkCount > 0) const SizedBox(width: 8),
+                        if (summary.homeworkCount > 0)
+                          _CountChip(icon: Icons.edit_note_rounded, count: summary.homeworkCount, color: AppColors.late, label: 'واجب'),
                       ],
                     ),
                   ],

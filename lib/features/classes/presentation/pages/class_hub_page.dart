@@ -6,6 +6,7 @@ import '../../../teacher_exams/presentation/pages/teacher_exams_list_page.dart';
 import '../../../teacher_grades/presentation/pages/teacher_grades_page.dart';
 import '../../../teacher_notes/presentation/pages/teacher_notes_page.dart';
 import '../../../teacher_files/presentation/pages/teacher_files_hub_page.dart';
+import '../../../teacher_external_links/presentation/pages/teacher_external_links_page.dart';
 import '../../../teacher_videos/presentation/pages/teacher_videos_page.dart';
 import '../../domain/entities/school_class.dart';
 import 'class_roster_page.dart';
@@ -99,6 +100,16 @@ class ClassHubPage extends StatelessWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => TeacherVideosPage(classId: schoolClass.id, className: schoolClass.name),
+                    ),
+                  ),
+                ),
+                _HubTile(
+                  icon: Icons.link_rounded,
+                  label: 'الروابط الخارجية',
+                  color: AppColors.accentDark,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => TeacherExternalLinksPage(classId: schoolClass.id, className: schoolClass.name),
                     ),
                   ),
                 ),

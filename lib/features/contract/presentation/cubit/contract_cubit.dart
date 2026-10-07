@@ -11,7 +11,9 @@ class ContractCubit extends Cubit<ContractState> {
     final result = await _useCase();
     result.fold(
       (f) => emit(ContractError(f.message)),
-      (contract) => emit(ContractLoaded(contract)),
+      (contract) => emit(
+        contract == null ? ContractEmpty() : ContractLoaded(contract),
+      ),
     );
   }
 }

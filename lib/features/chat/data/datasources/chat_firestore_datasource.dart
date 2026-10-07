@@ -70,6 +70,11 @@ class ChatFirestoreDataSource {
       if (mediaUrl != null) 'mediaUrl': mediaUrl,
       if (mediaDurationSeconds != null) 'mediaDurationSeconds': mediaDurationSeconds,
       'createdAt': FieldValue.serverTimestamp(),
+      // Firestore TTL field — once a TTL policy is enabled on it (Firebase
+      // Console → Firestore → TTL) for the `messages` collection group,
+      // Firestore auto-deletes each message at this timestamp, free of the
+      // usual delete-operation cost.
+      'expireAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 14))),
       'readBy': [senderId],
       'isBroadcast': false,
     });

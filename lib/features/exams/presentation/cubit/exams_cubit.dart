@@ -88,9 +88,26 @@ class ExamsCubit extends Cubit<ExamsState> {
     }
   }
 
+  bool canGoToQuestion(int index) {
+    final current = state;
+    if (current is! ExamTaking ||
+        index < 0 ||
+        index >= current.exam.questions.length) {
+      return false;
+    }
+
+    if (index <= current.currentIndex) return true;
+
+    for (var i = current.currentIndex; i < index; i++) {
+      final questionId = current.exam.questions[i].id;
+      if (!current.answers.containsKey(questionId)) return false;
+    }
+    return true;
+  }
+
   void nextQuestion() {
     final current = state;
-    if (current is ExamTaking && current.currentIndex < current.exam.questions.length - 1) {
+    if (current is ExamTaking && canGoToQuestion(current.currentIndex + 1)) {
       emit(current.copyWith(currentIndex: current.currentIndex + 1));
     }
   }
@@ -104,7 +121,7 @@ class ExamsCubit extends Cubit<ExamsState> {
 
   void goToQuestion(int index) {
     final current = state;
-    if (current is ExamTaking) {
+    if (current is ExamTaking && canGoToQuestion(index)) {
       emit(current.copyWith(currentIndex: index));
     }
   }

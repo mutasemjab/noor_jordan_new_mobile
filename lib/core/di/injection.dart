@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_client.dart';
+import '../auth/auth_session_manager.dart';
 import '../network/network_info.dart';
 import '../storage/local_storage.dart';
 
@@ -106,7 +107,9 @@ import '../../features/contract/presentation/cubit/contract_cubit.dart';
 import '../../features/educational_notes/data/datasources/notes_remote_datasource.dart';
 import '../../features/educational_notes/data/repositories/notes_repository_impl.dart';
 import '../../features/educational_notes/domain/repositories/notes_repository.dart';
-import '../../features/educational_notes/domain/usecases/get_notes_usecase.dart';
+import '../../features/educational_notes/domain/usecases/note_browse_usecases.dart';
+import '../../features/educational_notes/presentation/cubit/note_content_cubit.dart';
+import '../../features/educational_notes/presentation/cubit/note_subjects_cubit.dart';
 import '../../features/educational_notes/presentation/cubit/notes_cubit.dart';
 
 import '../../features/files/data/datasources/files_remote_datasource.dart';
@@ -114,6 +117,18 @@ import '../../features/files/data/repositories/files_repository_impl.dart';
 import '../../features/files/domain/repositories/files_repository.dart';
 import '../../features/files/domain/usecases/get_files_usecase.dart';
 import '../../features/files/presentation/cubit/files_cubit.dart';
+
+import '../../features/external_links/data/datasources/external_links_remote_datasource.dart';
+import '../../features/external_links/data/repositories/external_links_repository_impl.dart';
+import '../../features/external_links/domain/repositories/external_links_repository.dart';
+import '../../features/external_links/domain/usecases/get_external_links_usecase.dart';
+import '../../features/external_links/presentation/cubit/external_links_cubit.dart';
+
+import '../../features/teacher_external_links/data/datasources/teacher_external_links_remote_datasource.dart';
+import '../../features/teacher_external_links/data/repositories/teacher_external_links_repository_impl.dart';
+import '../../features/teacher_external_links/domain/repositories/teacher_external_links_repository.dart';
+import '../../features/teacher_external_links/domain/usecases/teacher_external_links_usecases.dart';
+import '../../features/teacher_external_links/presentation/cubit/teacher_external_links_cubit.dart';
 
 import '../../features/teacher_home/data/datasources/teacher_home_remote_datasource.dart';
 import '../../features/teacher_home/data/repositories/teacher_home_repository_impl.dart';
@@ -158,6 +173,7 @@ import '../../features/teacher_common/data/datasources/teacher_common_remote_dat
 import '../../features/teacher_common/data/repositories/teacher_common_repository_impl.dart';
 import '../../features/teacher_common/domain/repositories/teacher_common_repository.dart';
 import '../../features/teacher_common/domain/usecases/get_class_subjects_usecase.dart';
+import '../../features/teacher_common/domain/usecases/get_class_day_schedule_usecase.dart';
 
 import '../../features/teacher_files/data/datasources/teacher_files_remote_datasource.dart';
 import '../../features/teacher_files/data/repositories/teacher_files_repository_impl.dart';
@@ -213,8 +229,11 @@ Future<void> setupLocator() async {
   }
 
   // Core
-  sl.registerSingleton<LocalStorage>(LocalStorage(sl(), sl()));
-  sl.registerSingleton<Dio>(ApiClient.getInstance(sl()));
+  final localStorage = LocalStorage(sl(), sl());
+  await localStorage.initializeForLaunch();
+  sl.registerSingleton<LocalStorage>(localStorage);
+  sl.registerSingleton<AuthSessionManager>(AuthSessionManager(sl()));
+  sl.registerSingleton<Dio>(ApiClient.getInstance(sl(), sl()));
   sl.registerSingleton<NetworkInfo>(NetworkInfoImpl(sl()));
 
   // Auth
@@ -330,14 +349,45 @@ Future<void> setupLocator() async {
   // Educational Notes
   sl.registerLazySingleton<NotesRemoteDataSource>(() => NotesRemoteDataSourceImpl(sl()));
   sl.registerLazySingleton<NotesRepository>(() => NotesRepositoryImpl(sl(), sl()));
-  sl.registerLazySingleton(() => GetNotesUseCase(sl()));
-  sl.registerFactory(() => NotesCubit(sl()));
+  sl.registerLazySingleton(() => GetNoteDatesUseCase(sl()));
+  sl.registerLazySingleton(() => GetNoteSubjectsUseCase(sl()));
+  sl.registerLazySingleton(() => GetNoteContentUseCase(sl()));
+  sl.registerFactory(() => NoteDatesCubit(sl()));
+  sl.registerFactoryParam<NoteSubjectsCubit, String, void>(
+    (date, _) => NoteSubjectsCubit(date: date, useCase: sl()),
+  );
+  sl.registerFactoryParam<NoteContentCubit, String, int>(
+    (date, subjectId) => NoteContentCubit(date: date, subjectId: subjectId, useCase: sl()),
+  );
 
   // Files
   sl.registerLazySingleton<FilesRemoteDataSource>(() => FilesRemoteDataSourceImpl(sl()));
   sl.registerLazySingleton<FilesRepository>(() => FilesRepositoryImpl(sl(), sl()));
   sl.registerLazySingleton(() => GetFilesUseCase(sl()));
   sl.registerFactory(() => FilesCubit(sl()));
+
+  // External Links
+  sl.registerLazySingleton<ExternalLinksRemoteDataSource>(() => ExternalLinksRemoteDataSourceImpl(sl()));
+  sl.registerLazySingleton<ExternalLinksRepository>(() => ExternalLinksRepositoryImpl(sl(), sl()));
+  sl.registerLazySingleton(() => GetExternalLinksUseCase(sl()));
+  sl.registerFactory(() => ExternalLinksCubit(sl()));
+
+  // Teacher External Links
+  sl.registerLazySingleton<TeacherExternalLinksRemoteDataSource>(() => TeacherExternalLinksRemoteDataSourceImpl(sl()));
+  sl.registerLazySingleton<TeacherExternalLinksRepository>(() => TeacherExternalLinksRepositoryImpl(sl(), sl()));
+  sl.registerLazySingleton(() => GetTeacherExternalLinksUseCase(sl()));
+  sl.registerLazySingleton(() => CreateExternalLinkUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateExternalLinkUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteExternalLinkUseCase(sl()));
+  sl.registerFactoryParam<TeacherExternalLinksCubit, int, void>(
+    (classId, _) => TeacherExternalLinksCubit(
+      classId: classId,
+      getLinks: sl(),
+      createLink: sl(),
+      updateLink: sl(),
+      deleteLink: sl(),
+    ),
+  );
 
   // Teacher Home
   sl.registerLazySingleton<TeacherHomeRemoteDataSource>(() => TeacherHomeRemoteDataSourceImpl(sl()));
@@ -380,6 +430,7 @@ Future<void> setupLocator() async {
   sl.registerLazySingleton(() => CreateNoteUseCase(sl()));
   sl.registerLazySingleton(() => UpdateNoteUseCase(sl()));
   sl.registerLazySingleton(() => DeleteNoteUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteNoteImageUseCase(sl()));
   sl.registerFactoryParam<TeacherNotesCubit, int, void>(
     (classId, _) => TeacherNotesCubit(
       classId: classId,
@@ -387,6 +438,7 @@ Future<void> setupLocator() async {
       createNote: sl(),
       updateNote: sl(),
       deleteNote: sl(),
+      deleteNoteImage: sl(),
     ),
   );
 
@@ -397,10 +449,11 @@ Future<void> setupLocator() async {
   sl.registerLazySingleton(() => UpdateTeacherProfileUseCase(sl()));
   sl.registerFactory(() => TeacherProfileCubit(sl(), sl()));
 
-  // Teacher Common (class subjects lookup)
+  // Teacher Common (class subjects lookup, day-schedule lookup)
   sl.registerLazySingleton<TeacherCommonRemoteDataSource>(() => TeacherCommonRemoteDataSourceImpl(sl()));
   sl.registerLazySingleton<TeacherCommonRepository>(() => TeacherCommonRepositoryImpl(sl(), sl()));
   sl.registerLazySingleton(() => GetClassSubjectsUseCase(sl()));
+  sl.registerLazySingleton(() => GetClassDayScheduleUseCase(sl()));
 
   // Teacher Files (question banks / previous-year exams / worksheets)
   sl.registerLazySingleton<TeacherFilesRemoteDataSource>(() => TeacherFilesRemoteDataSourceImpl(sl()));

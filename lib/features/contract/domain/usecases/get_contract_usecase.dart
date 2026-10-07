@@ -6,5 +6,5 @@ import '../repositories/contract_repository.dart';
 class GetContractUseCase {
   final ContractRepository _repo;
   GetContractUseCase(this._repo);
-  Future<Either<Failure, Contract>> call() => _repo.getContract();
+  Future<Either<Failure, Contract?>> call() => _repo.getContract();
 }

@@ -26,6 +26,9 @@ class ApiEndpoints {
   static String studentAttemptResult(int attemptId) => '/v1/student/attempts/$attemptId';
   static const String studentContract = '/v1/student/contract';
   static const String studentEducationalNotes = '/v1/student/educational-notes';
+  static const String studentNoteDates = '/v1/student/educational-notes/dates';
+  static const String studentNoteSubjects = '/v1/student/educational-notes/subjects';
+  static const String studentNoteContent = '/v1/student/educational-notes/content';
   static const String studentAnnouncements = '/v1/student/announcements';
   static String studentAnnouncementDetail(int id) => '/v1/student/announcements/$id';
   static const String studentNotifications = '/v1/student/notifications';
@@ -40,6 +43,7 @@ class ApiEndpoints {
   static const String studentTeachers = '/v1/student/teachers';
   static String studentTeacherDetail(int id) => '/v1/student/teachers/$id';
   static const String studentFirebaseToken = '/v1/student/firebase-token';
+  static const String studentExternalLinks = '/v1/student/external-links';
 
   // Teacher Auth
   static const String teacherLogin = '/v1/teacher/auth/login';
@@ -52,6 +56,7 @@ class ApiEndpoints {
   static const String teacherClasses = '/v1/teacher/my-classes';
   static String teacherClassStudents(int classId) => '/v1/teacher/classes/$classId/students';
   static String teacherClassSubjects(int classId) => '/v1/teacher/classes/$classId/subjects';
+  static String teacherClassDaySchedule(int classId) => '/v1/teacher/classes/$classId/day-schedule';
 
   // Teacher Attendance
   static const String teacherAttendance = '/v1/teacher/attendance';
@@ -73,6 +78,8 @@ class ApiEndpoints {
   static const String teacherCreateNote = '/v1/teacher/educational-notes';
   static String teacherUpdateNote(int id) => '/v1/teacher/educational-notes/$id';
   static String teacherDeleteNote(int id) => '/v1/teacher/educational-notes/$id';
+  static String teacherDeleteNoteImage(int noteId, int imageId) =>
+      '/v1/teacher/educational-notes/$noteId/images/$imageId';
 
   // Teacher Files (question banks / previous-year exams / worksheets)
   static const String teacherQuestionBanks = '/v1/teacher/question-banks';
@@ -81,6 +88,10 @@ class ApiEndpoints {
   static String teacherPreviousYearExamDetail(int id) => '/v1/teacher/previous-year-exams/$id';
   static const String teacherWorksheets = '/v1/teacher/worksheets';
   static String teacherWorksheetDetail(int id) => '/v1/teacher/worksheets/$id';
+
+  // Teacher External Links
+  static const String teacherExternalLinks = '/v1/teacher/external-links';
+  static String teacherExternalLinkDetail(int id) => '/v1/teacher/external-links/$id';
 
   // Teacher Videos (YouTube)
   static String teacherClassVideos(int classId) => '/v1/teacher/classes/$classId/videos';

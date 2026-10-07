@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
+import '../../domain/entities/day_period.dart';
 import '../../domain/entities/teacher_subject.dart';
 import '../../domain/repositories/teacher_common_repository.dart';
 import '../datasources/teacher_common_remote_datasource.dart';
@@ -17,6 +18,22 @@ class TeacherCommonRepositoryImpl implements TeacherCommonRepository {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
       return Right(await _remote.getClassSubjects(classId));
+    } on NetworkException {
+      return const Left(NetworkFailure());
+    } on UnauthorizedException {
+      return const Left(UnauthorizedFailure());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<ClassDayPeriod>>> getClassDaySchedule({required int classId, required String date}) async {
+    if (!await _network.isConnected) return const Left(NetworkFailure());
+    try {
+      return Right(await _remote.getClassDaySchedule(classId: classId, date: date));
     } on NetworkException {
       return const Left(NetworkFailure());
     } on UnauthorizedException {

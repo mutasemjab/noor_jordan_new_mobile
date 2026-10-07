@@ -1,43 +1,26 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/educational_note.dart';
 
-abstract class NotesState extends Equatable {
-  const NotesState();
+abstract class NoteDatesState extends Equatable {
+  const NoteDatesState();
   @override
   List<Object?> get props => [];
 }
 
-class NotesInitial extends NotesState {}
+class NoteDatesInitial extends NoteDatesState {}
 
-class NotesLoading extends NotesState {}
+class NoteDatesLoading extends NoteDatesState {}
 
-class NotesLoaded extends NotesState {
-  final List<EducationalNote> notes;
-  const NotesLoaded(this.notes);
-
-  /// Distinct days that have notes, newest first.
-  List<DateTime> get days {
-    final set = <DateTime>{};
-    for (final n in notes) {
-      set.add(DateTime(n.date.year, n.date.month, n.date.day));
-    }
-    final list = set.toList()..sort((a, b) => b.compareTo(a));
-    return list;
-  }
-
-  List<EducationalNote> notesForDay(DateTime day) {
-    return notes
-        .where((n) => n.date.year == day.year && n.date.month == day.month && n.date.day == day.day)
-        .toList();
-  }
-
+class NoteDatesLoaded extends NoteDatesState {
+  final List<NoteDateSummary> dates;
+  const NoteDatesLoaded(this.dates);
   @override
-  List<Object?> get props => [notes];
+  List<Object?> get props => [dates];
 }
 
-class NotesError extends NotesState {
+class NoteDatesError extends NoteDatesState {
   final String message;
-  const NotesError(this.message);
+  const NoteDatesError(this.message);
   @override
   List<Object?> get props => [message];
 }

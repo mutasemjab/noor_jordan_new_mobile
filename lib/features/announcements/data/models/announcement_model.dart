@@ -6,6 +6,7 @@ class AnnouncementModel extends Announcement {
     required super.title,
     required super.body,
     super.imageUrl,
+    super.pdfUrl,
     required super.publishedAt,
   });
 
@@ -15,6 +16,7 @@ class AnnouncementModel extends Announcement {
         title: (json['title'] ?? '') as String,
         body: (json['body'] ?? '') as String,
         imageUrl: json['image'] as String?,
+        pdfUrl: json['pdf_url'] as String?,
         publishedAt: (json['published_at'] ?? json['created_at'] ?? '') as String,
       );
 }

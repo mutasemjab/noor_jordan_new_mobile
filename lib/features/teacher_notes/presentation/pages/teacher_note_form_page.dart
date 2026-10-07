@@ -5,8 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/multi_image_picker_sheet.dart';
 import '../../../chat/presentation/widgets/attachment_sheet.dart';
 import '../../../educational_notes/domain/entities/educational_note.dart';
+import '../../../teacher_common/domain/entities/teacher_subject.dart';
+import '../../../teacher_common/presentation/widgets/class_day_schedule_banner.dart';
+import '../../../teacher_common/presentation/widgets/subject_picker_field.dart';
 import '../cubit/teacher_notes_cubit.dart';
 
 class TeacherNoteFormPage extends StatefulWidget {
@@ -24,7 +28,10 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
   late final TextEditingController _descCtrl;
   late EducationalNoteType _type;
   late DateTime _date;
+  TeacherSubject? _subject;
   File? _newAttachment;
+  late List<NoteImage> _existingImages;
+  final List<File> _newImages = [];
   bool _saving = false;
 
   bool get _isEditing => widget.existingNote != null;
@@ -37,6 +44,10 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
     _descCtrl = TextEditingController(text: note?.description ?? '');
     _type = note?.type ?? EducationalNoteType.lesson;
     _date = note?.date ?? DateTime.now();
+    _existingImages = note?.images ?? [];
+    if (note?.subjectId != null && note?.subjectName != null) {
+      _subject = TeacherSubject(id: note!.subjectId!, name: note.subjectName!);
+    }
   }
 
   @override
@@ -61,10 +72,34 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
     if (file != null) setState(() => _newAttachment = file);
   }
 
+  Future<void> _pickImages() async {
+    final files = await MultiImagePickerSheet.pick(context);
+    if (files.isNotEmpty) setState(() => _newImages.addAll(files));
+  }
+
+  void _removeNewImage(File file) => setState(() => _newImages.remove(file));
+
+  Future<void> _removeExistingImage(NoteImage image) async {
+    final cubit = context.read<TeacherNotesCubit>();
+    setState(() => _existingImages = _existingImages.where((i) => i.id != image.id).toList());
+    final error = await cubit.deleteImage(noteId: widget.existingNote!.id, imageId: image.id);
+    if (!mounted || error == null) return;
+    setState(() => _existingImages = [..._existingImages, image]..sort((a, b) => a.id.compareTo(b.id)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error, style: const TextStyle(fontFamily: 'Cairo')), backgroundColor: AppColors.error),
+    );
+  }
+
   Future<void> _save() async {
     if (_titleCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('الرجاء إدخال عنوان', style: TextStyle(fontFamily: 'Cairo')), backgroundColor: AppColors.error),
+      );
+      return;
+    }
+    if (_subject == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('اختر المادة أولاً', style: TextStyle(fontFamily: 'Cairo')), backgroundColor: AppColors.error),
       );
       return;
     }
@@ -74,19 +109,23 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
     if (_isEditing) {
       error = await cubit.update(
         noteId: widget.existingNote!.id,
+        subjectId: _subject!.id,
         title: _titleCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         type: _type,
         date: _date,
         attachment: _newAttachment,
+        images: _newImages,
       );
     } else {
       error = await cubit.create(
+        subjectId: _subject!.id,
         title: _titleCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         type: _type,
         date: _date,
         attachment: _newAttachment,
+        images: _newImages,
       );
     }
     if (!mounted) return;
@@ -113,6 +152,13 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          ClassDayScheduleBanner(classId: widget.classId, date: _date),
+          SubjectPickerField(
+            classId: widget.classId,
+            selectedSubjectId: _subject?.id,
+            onChanged: (s) => setState(() => _subject = s),
+          ),
+          const SizedBox(height: 16),
           // Type selector
           Row(
             children: [
@@ -203,6 +249,30 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
             label: Text(_newAttachment != null || (_isEditing && widget.existingNote!.attachment != null) ? 'تغيير الصورة' : 'إرفاق صورة',
                 style: const TextStyle(fontFamily: 'Cairo')),
           ),
+          const SizedBox(height: 20),
+          Text('صور إضافية', style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          const SizedBox(height: 10),
+          if (_existingImages.isNotEmpty || _newImages.isNotEmpty)
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                ..._existingImages.map((image) => _ImageThumb(
+                      child: CachedNetworkImage(imageUrl: image.url, width: 84, height: 84, fit: BoxFit.cover),
+                      onRemove: () => _removeExistingImage(image),
+                    )),
+                ..._newImages.map((file) => _ImageThumb(
+                      child: Image.file(file, width: 84, height: 84, fit: BoxFit.cover),
+                      onRemove: () => _removeNewImage(file),
+                    )),
+              ],
+            ),
+          if (_existingImages.isNotEmpty || _newImages.isNotEmpty) const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _pickImages,
+            icon: const Icon(Icons.add_photo_alternate_outlined),
+            label: const Text('إضافة صور', style: TextStyle(fontFamily: 'Cairo')),
+          ),
           const SizedBox(height: 28),
           SizedBox(
             width: double.infinity,
@@ -234,6 +304,29 @@ class _TeacherNoteFormPageState extends State<TeacherNoteFormPage> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.divider)),
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.divider)),
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary)),
+    );
+  }
+}
+
+class _ImageThumb extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onRemove;
+  const _ImageThumb({required this.child, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.topLeft,
+      children: [
+        ClipRRect(borderRadius: BorderRadius.circular(10), child: child),
+        GestureDetector(
+          onTap: onRemove,
+          child: const Padding(
+            padding: EdgeInsets.all(2),
+            child: CircleAvatar(radius: 11, backgroundColor: Colors.black45, child: Icon(Icons.close_rounded, color: Colors.white, size: 14)),
+          ),
+        ),
+      ],
     );
   }
 }

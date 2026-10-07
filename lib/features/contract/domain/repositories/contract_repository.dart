@@ -3,5 +3,5 @@ import '../../../../core/error/failures.dart';
 import '../entities/contract.dart';
 
 abstract class ContractRepository {
-  Future<Either<Failure, Contract>> getContract();
+  Future<Either<Failure, Contract?>> getContract();
 }

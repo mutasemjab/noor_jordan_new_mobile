@@ -13,7 +13,7 @@ class ContractRepositoryImpl implements ContractRepository {
   ContractRepositoryImpl(this._remote, this._network);
 
   @override
-  Future<Either<Failure, Contract>> getContract() async {
+  Future<Either<Failure, Contract?>> getContract() async {
     if (!await _network.isConnected) return const Left(NetworkFailure());
     try {
       return Right(await _remote.getContract());

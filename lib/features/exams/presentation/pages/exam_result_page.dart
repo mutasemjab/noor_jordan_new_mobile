@@ -67,7 +67,7 @@ class _ExamResultPageState extends State<ExamResultPage>
             title: const Text('نتيجة الاختبار'),
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            automaticallyImplyLeading: false,
+            leading: BackButton(onPressed: () => context.go('/exams')),
           ),
           body: SingleChildScrollView(
             child: Column(

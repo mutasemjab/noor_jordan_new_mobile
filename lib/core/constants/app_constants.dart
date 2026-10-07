@@ -3,6 +3,7 @@ class AppConstants {
 
   static const String appName = 'مدارس نور الأردن الدولية';
   static const String tokenKey = 'auth_token';
+  static const String installationMarkerKey = 'installation_initialized_v1';
   static const String userKey = 'user_data';
   static const String userTypeKey = 'user_type';
   static const String userTypeStudent = 'student';

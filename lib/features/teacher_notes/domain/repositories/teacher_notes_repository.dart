@@ -9,21 +9,27 @@ abstract class TeacherNotesRepository {
 
   Future<Either<Failure, void>> createNote({
     required int classId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   });
 
   Future<Either<Failure, void>> updateNote({
     required int noteId,
+    required int subjectId,
     required String title,
     required String description,
     required EducationalNoteType type,
     required DateTime date,
     File? attachment,
+    List<File> images = const [],
   });
 
   Future<Either<Failure, void>> deleteNote(int noteId);
+
+  Future<Either<Failure, void>> deleteNoteImage({required int noteId, required int imageId});
 }
