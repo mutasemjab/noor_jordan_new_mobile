@@ -218,6 +218,7 @@ Future<void> setupLocator() async {
   sl.registerSingleton<FlutterSecureStorage>(
     const FlutterSecureStorage(
       aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
     ),
   );
   sl.registerSingleton<Connectivity>(Connectivity());
@@ -230,7 +231,11 @@ Future<void> setupLocator() async {
 
   // Core
   final localStorage = LocalStorage(sl(), sl());
-  await localStorage.initializeForLaunch();
+  try {
+    await localStorage.initializeForLaunch();
+  } catch (_) {
+    // Ignore any keychain/storage errors on cold launch to prevent crash
+  }
   sl.registerSingleton<LocalStorage>(localStorage);
   sl.registerSingleton<AuthSessionManager>(AuthSessionManager(sl()));
   sl.registerSingleton<Dio>(ApiClient.getInstance(sl(), sl()));

@@ -61,7 +61,16 @@ Future<void> main() async {
     // Firebase not configured — continue without it
   }
 
-  await setupLocator();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter Error: ${details.exception}');
+  };
+
+  try {
+    await setupLocator();
+  } catch (e) {
+    debugPrint('setupLocator error: $e');
+  }
 
   runApp(const NoorApp());
 }

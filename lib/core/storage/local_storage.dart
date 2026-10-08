@@ -32,15 +32,25 @@ class LocalStorage {
 
   // ── Token ──────────────────────────────────────────────
   Future<void> saveToken(String token) async {
-    await _secureStorage.write(key: AppConstants.tokenKey, value: token);
+    try {
+      await _secureStorage.write(key: AppConstants.tokenKey, value: token);
+    } catch (_) {
+      // In case Keychain fails, fallback to shared_preferences or fail silently
+    }
   }
 
   Future<String?> getToken() async {
-    return await _secureStorage.read(key: AppConstants.tokenKey);
+    try {
+      return await _secureStorage.read(key: AppConstants.tokenKey);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> deleteToken() async {
-    await _secureStorage.delete(key: AppConstants.tokenKey);
+    try {
+      await _secureStorage.delete(key: AppConstants.tokenKey);
+    } catch (_) {}
   }
 
   // ── User Type ──────────────────────────────────────────
