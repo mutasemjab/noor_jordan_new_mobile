@@ -25,6 +25,15 @@ class LocalStorage {
 
     if (token != null && token.isNotEmpty && !hasLocalSessionMetadata) {
       await deleteToken();
+      // Confirm the stale token is actually gone before trusting this check
+      // as "done". A Keychain delete can silently fail on a given device
+      // (transient OS/entitlement hiccup); if we marked the launch as
+      // handled regardless, that one failure would permanently strand the
+      // device with a stale token auto-logging into the old account on
+      // every future launch, with this safety net never retrying. Leaving
+      // the marker unset makes it retry again next launch instead.
+      final stillStale = await getToken();
+      if (stillStale != null && stillStale.isNotEmpty) return;
     }
 
     await _prefs.setBool(AppConstants.installationMarkerKey, true);
