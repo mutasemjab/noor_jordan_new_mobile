@@ -8,6 +8,7 @@ class AppNotificationModel extends AppNotification {
     required super.type,
     required super.isRead,
     required super.createdAt,
+    super.data,
   });
 
   factory AppNotificationModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +19,7 @@ class AppNotificationModel extends AppNotification {
       type: json['type'] as String? ?? 'general',
       isRead: (json['is_read'] as bool?) ?? false,
       createdAt: json['created_at'] as String? ?? '',
+      data: json['data'] is Map ? Map<String, dynamic>.from(json['data'] as Map) : null,
     );
   }
 
@@ -29,6 +31,7 @@ class AppNotificationModel extends AppNotification {
       'type': type,
       'is_read': isRead,
       'created_at': createdAt,
+      'data': data,
     };
   }
 }

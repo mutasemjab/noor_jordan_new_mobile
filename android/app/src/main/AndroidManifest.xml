@@ -32,6 +32,13 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- A push that carries android click_action FLUTTER_NOTIFICATION_CLICK
+                 (older backend builds, the Firebase console) only opens the app
+                 on tap if an activity declares this action. -->
+            <intent-filter>
+                <action android:name="FLUTTER_NOTIFICATION_CLICK"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -44,7 +51,7 @@
              matching the channel id created in main.dart. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="noor_bell_channel" />
+            android:value="noor_custom_sound_channel" />
     </application>
 
     <!-- Required since Android 11 (API 30) so url_launcher / canLaunchUrl can

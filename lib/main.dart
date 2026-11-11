@@ -13,6 +13,7 @@ import 'package:noor/firebase_options.dart';
 import 'core/auth/auth_session_manager.dart';
 import 'core/constants/app_colors.dart';
 import 'core/di/injection.dart';
+import 'core/notifications/notification_router.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
@@ -170,30 +171,33 @@ void _listenForegroundMessages() {
 /// (onMessageOpenedApp) and when it was launched cold from a terminated
 /// state by tapping the notification (getInitialMessage).
 void _listenNotificationTaps() {
+  // App was in the background (Android + iOS).
   FirebaseMessaging.onMessageOpenedApp
       .listen((message) => _routePushTap(message.data));
 
+  // App was fully closed and launched by tapping an FCM push (Android + iOS).
+  // NotificationRouter holds it until the splash has reached the home shell.
   FirebaseMessaging.instance.getInitialMessage().then((message) {
     if (message == null) return;
-    // The router isn't attached yet at this point in a cold start — wait
-    // for the first frame before pushing.
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _routePushTap(message.data));
+    _routePushTap(message.data);
+  });
+
+  // App was killed while a foreground (local) notification was still shown
+  // and then launched by tapping it.
+  localNotificationsPlugin.getNotificationAppLaunchDetails().then((details) {
+    if (details == null || !details.didNotificationLaunchApp) return;
+    final payload = details.notificationResponse?.payload;
+    if (payload == null || payload.isEmpty) return;
+    try {
+      _routePushTap(jsonDecode(payload) as Map<String, dynamic>);
+    } catch (_) {}
   });
 }
 
-/// Central push-payload router: a `type` (or `screen`) field in the FCM
-/// data payload decides which screen to open on tap.
+/// Every push tap opens its page through [NotificationRouter], driven by
+/// the `type` (or `screen`) field in the FCM data payload.
 void _routePushTap(Map<String, dynamic> data) {
-  final type = data['type'] as String? ?? data['screen'] as String?;
-  switch (type) {
-    case 'bus_tracking':
-    case 'bus_approaching':
-      appRouter.push('/bus-tracking');
-      break;
-    default:
-      break;
-  }
+  NotificationRouter.handleTap(data);
 }
 
 class NoorApp extends StatefulWidget {

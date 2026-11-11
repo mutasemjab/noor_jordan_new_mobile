@@ -8,6 +8,9 @@ class AppNotification extends Equatable {
   final bool isRead;
   final String createdAt;
 
+  /// Extra routing info from the backend (ids etc.); may be null.
+  final Map<String, dynamic>? data;
+
   const AppNotification({
     required this.id,
     required this.title,
@@ -15,6 +18,7 @@ class AppNotification extends Equatable {
     required this.type,
     required this.isRead,
     required this.createdAt,
+    this.data,
   });
 
   AppNotification copyWith({
@@ -32,11 +36,12 @@ class AppNotification extends Equatable {
       type: type ?? this.type,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
+      data: data,
     );
   }
 
   @override
-  List<Object?> get props => [id, title, body, type, isRead, createdAt];
+  List<Object?> get props => [id, title, body, type, isRead, createdAt, data];
 }
 
 class NotificationsData extends Equatable {
