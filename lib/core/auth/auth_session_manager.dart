@@ -42,7 +42,9 @@ class AuthSessionManager {
 
     final loginRoute = userType == AppConstants.userTypeTeacher
         ? '/teacher-login'
-        : '/student-login';
+        : userType == AppConstants.userTypeStudent
+            ? '/student-login'
+            : '/role-select';
     _sessionExpiredController.add(loginRoute);
   }
 

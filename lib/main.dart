@@ -28,7 +28,10 @@ const _iosSoundFile = 'custom_sound.caf';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+  } catch (_) {}
 }
 
 Future<void> main() async {
@@ -54,11 +57,16 @@ Future<void> main() async {
         options: DefaultFirebaseOptions.currentPlatform);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     await _requestNotificationPermissions();
-    await _initLocalNotifications();
     _listenForegroundMessages();
     _listenNotificationTaps();
-  } catch (_) {
-    // Firebase not configured — continue without it
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
+
+  try {
+    await _initLocalNotifications();
+  } catch (e) {
+    debugPrint('Local notifications init error: $e');
   }
 
   FlutterError.onError = (details) {
@@ -204,21 +212,23 @@ class NoorApp extends StatefulWidget {
 }
 
 class _NoorAppState extends State<NoorApp> {
-  late final StreamSubscription<String> _sessionExpiredSubscription;
+  StreamSubscription<String>? _sessionExpiredSubscription;
 
   @override
   void initState() {
     super.initState();
-    _sessionExpiredSubscription =
-        sl<AuthSessionManager>().sessionExpired.listen((loginRoute) {
-      if (!mounted) return;
-      appRouter.go(loginRoute);
-    });
+    if (sl.isRegistered<AuthSessionManager>()) {
+      _sessionExpiredSubscription =
+          sl<AuthSessionManager>().sessionExpired.listen((loginRoute) {
+        if (!mounted) return;
+        appRouter.go(loginRoute);
+      });
+    }
   }
 
   @override
   void dispose() {
-    _sessionExpiredSubscription.cancel();
+    _sessionExpiredSubscription?.cancel();
     super.dispose();
   }
 

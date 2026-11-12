@@ -281,8 +281,13 @@ Future<void> setupLocator() async {
 
   // Chat
   sl.registerLazySingleton<ChatRemoteDataSource>(() => ChatRemoteDataSourceImpl(sl()));
-  sl.registerLazySingleton<ChatFirestoreDataSource>(() => ChatFirestoreDataSource(sl()));
-  sl.registerLazySingleton<FirebaseChatAuthBridge>(() => FirebaseChatAuthBridge(sl(), sl()));
+  sl.registerLazySingleton<ChatFirestoreDataSource>(() => ChatFirestoreDataSource(
+    sl.isRegistered<FirebaseFirestore>() ? sl<FirebaseFirestore>() : FirebaseFirestore.instance,
+  ));
+  sl.registerLazySingleton<FirebaseChatAuthBridge>(() => FirebaseChatAuthBridge(
+    sl.isRegistered<FirebaseAuth>() ? sl<FirebaseAuth>() : FirebaseAuth.instance,
+    sl(),
+  ));
   sl.registerLazySingleton<ChatRepository>(() => ChatRepositoryImpl(sl(), sl(), sl(), sl()));
   sl.registerLazySingleton(() => EnsureChatReadyUseCase(sl()));
   sl.registerLazySingleton(() => GetConversationIdUseCase(sl()));

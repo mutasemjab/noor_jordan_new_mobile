@@ -51,14 +51,15 @@ class ApiInterceptor extends InterceptorsWrapper {
       case DioExceptionType.badResponse:
         final statusCode = err.response?.statusCode;
         final backendMessage = _backendMessage(err.response?.data);
-        if (statusCode == 401) {
+        if (statusCode == 401 || statusCode == 403) {
           final rejectedToken = _bearerToken(err.requestOptions);
           if (rejectedToken != null && !_isLoginRequest(err.requestOptions)) {
             await _authSessionManager.handleUnauthorized(rejectedToken);
           }
-          arabicMessage = backendMessage ?? 'انتهت جلسة تسجيل الدخول، يرجى تسجيل الدخول مجدداً';
-        } else if (statusCode == 403) {
-          arabicMessage = backendMessage ?? 'غير مصرح بالوصول';
+          arabicMessage = backendMessage ??
+              (statusCode == 401
+                  ? 'انتهت جلسة تسجيل الدخول، يرجى تسجيل الدخول مجدداً'
+                  : 'غير مصرح بالوصول');
         } else if (statusCode == 404) {
           arabicMessage = backendMessage ?? 'البيانات غير موجودة';
         } else if (statusCode == 422) {

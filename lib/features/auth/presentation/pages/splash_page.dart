@@ -42,10 +42,22 @@ class _SplashPageState extends State<SplashPage>
     if (!mounted) return;
     if (token != null && token.isNotEmpty) {
       final userType = storage.getUserType();
-      if (userType == AppConstants.userTypeTeacher) {
+      final userData = storage.getUserData();
+
+      // Ensure the session is completely consistent (has token, userType, and user metadata)
+      if (userType == AppConstants.userTypeTeacher && userData != null) {
         context.go('/teacher-home');
-      } else {
+        return;
+      } else if (userType == AppConstants.userTypeStudent && userData != null) {
         context.go('/home');
+        return;
+      } else {
+        // Stale or corrupted session leftover from previous install or partial wipe.
+        // Wipe cleanly and send to role select screen.
+        await storage.clearUserSession();
+        if (!mounted) return;
+        context.go('/role-select');
+        return;
       }
     } else {
       context.go('/role-select');

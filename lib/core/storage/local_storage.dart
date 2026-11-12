@@ -19,21 +19,15 @@ class LocalStorage {
   Future<void> initializeForLaunch() async {
     if (_prefs.getBool(AppConstants.installationMarkerKey) == true) return;
 
-    final token = await getToken();
     final hasLocalSessionMetadata = _prefs.containsKey(AppConstants.userKey) ||
         _prefs.containsKey(AppConstants.userTypeKey);
 
-    if (token != null && token.isNotEmpty && !hasLocalSessionMetadata) {
-      await deleteToken();
-      // Confirm the stale token is actually gone before trusting this check
-      // as "done". A Keychain delete can silently fail on a given device
-      // (transient OS/entitlement hiccup); if we marked the launch as
-      // handled regardless, that one failure would permanently strand the
-      // device with a stale token auto-logging into the old account on
-      // every future launch, with this safety net never retrying. Leaving
-      // the marker unset makes it retry again next launch instead.
-      final stillStale = await getToken();
-      if (stillStale != null && stillStale.isNotEmpty) return;
+    if (!hasLocalSessionMetadata) {
+      try {
+        await _secureStorage.deleteAll();
+      } catch (_) {
+        await deleteToken();
+      }
     }
 
     await _prefs.setBool(AppConstants.installationMarkerKey, true);
@@ -65,6 +59,9 @@ class LocalStorage {
   // ── User Type ──────────────────────────────────────────
   Future<void> saveUserType(String type) async {
     await _prefs.setString(AppConstants.userTypeKey, type);
+    try {
+      await _secureStorage.write(key: AppConstants.userTypeKey, value: type);
+    } catch (_) {}
   }
 
   String? getUserType() => _prefs.getString(AppConstants.userTypeKey);
@@ -107,12 +104,17 @@ class LocalStorage {
 
   // ── Clear ──────────────────────────────────────────────
   Future<void> clearAll() async {
-    await _secureStorage.deleteAll();
+    try {
+      await _secureStorage.deleteAll();
+    } catch (_) {}
     await _prefs.clear();
   }
 
   Future<void> clearUserSession() async {
-    await _secureStorage.delete(key: AppConstants.tokenKey);
+    try {
+      await _secureStorage.delete(key: AppConstants.tokenKey);
+      await _secureStorage.delete(key: AppConstants.userTypeKey);
+    } catch (_) {}
     await _prefs.remove(AppConstants.userKey);
     await _prefs.remove(AppConstants.userTypeKey);
   }
