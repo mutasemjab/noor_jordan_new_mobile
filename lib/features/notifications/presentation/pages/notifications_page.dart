@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/notifications/notification_router.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../domain/entities/app_notification.dart';
 import '../cubit/notifications_cubit.dart';
@@ -175,6 +176,11 @@ class _NotificationItemState extends State<_NotificationItem>
       widget.onTap();
       await _controller.reverse();
     }
+    // Open the page this notification belongs to (if it has one).
+    NotificationRouter.openFromList(
+      widget.notification.type,
+      widget.notification.data,
+    );
   }
 
   IconData _getIconForType(String type) {
@@ -190,7 +196,19 @@ class _NotificationItemState extends State<_NotificationItem>
       case 'payment':
         return Icons.payment_outlined;
       case 'schedule':
+      case 'exam_schedule':
         return Icons.schedule_outlined;
+      case 'worksheet':
+      case 'previous_year_exam':
+      case 'question_bank':
+        return Icons.description_outlined;
+      case 'external_link':
+        return Icons.link_rounded;
+      case 'video':
+        return Icons.play_circle_outline_rounded;
+      case 'bus_approaching':
+      case 'bus_tracking':
+        return Icons.directions_bus_outlined;
       default:
         return Icons.notifications_outlined;
     }

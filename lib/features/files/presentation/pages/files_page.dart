@@ -11,7 +11,10 @@ import '../cubit/files_state.dart';
 import '../../domain/entities/file_item.dart';
 
 class FilesPage extends StatefulWidget {
-  const FilesPage({super.key});
+  /// 0 = previous exams, 1 = question bank, 2 = worksheets.
+  final int initialTab;
+
+  const FilesPage({super.key, this.initialTab = 0});
 
   @override
   State<FilesPage> createState() => _FilesPageState();
@@ -23,7 +26,11 @@ class _FilesPageState extends State<FilesPage> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 3, vsync: this);
+    _tabCtrl = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTab.clamp(0, 2),
+    );
   }
 
   @override

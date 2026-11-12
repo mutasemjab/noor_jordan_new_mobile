@@ -33,6 +33,9 @@ import '../../features/exam_schedules/presentation/pages/exam_schedules_page.dar
 import '../../features/chat/presentation/pages/conversations_list_page.dart';
 import '../../features/chat/presentation/pages/student_teacher_list_page.dart';
 import '../../features/chat/presentation/pages/teacher_chat_contacts_page.dart';
+import '../../features/chat/presentation/pages/chat_page.dart';
+import '../../features/chat/domain/entities/chat_contact.dart';
+import '../notifications/notification_router.dart';
 
 // Teacher shell + pages
 import '../../features/teacher_home/presentation/pages/teacher_home_page.dart';
@@ -173,7 +176,10 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/files',
-      pageBuilder: (_, state) => _slidePage(state, const FilesPage()),
+      pageBuilder: (_, state) => _slidePage(
+        state,
+        FilesPage(initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0),
+      ),
     ),
     GoRoute(
       path: '/external-links',
@@ -191,6 +197,11 @@ final appRouter = GoRouter(
           onStartNewChat: () => context.push('/student-teachers'),
         ),
       ),
+    ),
+    // Opened from a chat notification (student or teacher) with the sender.
+    GoRoute(
+      path: '/chat',
+      pageBuilder: (_, state) => _slidePage(state, ChatPage(contact: state.extra as ChatContact)),
     ),
     GoRoute(
       path: '/student-teachers',
@@ -296,6 +307,13 @@ class _StudentScaffoldState extends State<StudentScaffold> {
     _NavItemData(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'حسابي'),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Logged-in student is on screen: open a notification tapped at launch.
+    NotificationRouter.markReady();
+  }
+
   int _currentIndex(BuildContext context) {
     final loc = GoRouterState.of(context).uri.toString();
     for (int i = 0; i < _tabs.length; i++) {
@@ -338,6 +356,13 @@ class _TeacherScaffoldState extends State<TeacherScaffold> {
     _NavItemData(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'الرئيسية'),
     _NavItemData(icon: Icons.class_outlined, activeIcon: Icons.class_rounded, label: 'صفوفي'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Logged-in teacher is on screen: open a notification tapped at launch.
+    NotificationRouter.markReady();
+  }
 
   int _currentIndex(BuildContext context) {
     final loc = GoRouterState.of(context).uri.toString();
